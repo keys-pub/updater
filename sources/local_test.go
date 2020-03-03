@@ -4,8 +4,6 @@
 package sources
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/keys-pub/updater"
@@ -14,8 +12,8 @@ import (
 )
 
 func TestLocalUpdateSource(t *testing.T) {
-	path := filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test.zip")
-	jsonPath := filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/update.json")
+	path := "../test/test.zip"
+	jsonPath := "../test/update.json"
 	local := NewLocalUpdateSource(path, jsonPath)
 	assert.Equal(t, local.Description(), "Local")
 

@@ -28,7 +28,7 @@ const signature1 = `BEGIN KEYBASE SALTPACK DETACHED SIGNATURE.
   Z. END KEYBASE SALTPACK DETACHED SIGNATURE.
 `
 
-var testZipPath = "./test/test.zip"
+var testZipPath = "../test/test.zip"
 
 // keybase sign -d -i test.zip
 const testZipSignature = `BEGIN KEYBASE SALTPACK DETACHED SIGNATURE. kXR7VktZdyH7rvq v5wcIkPOwDJ1n11 M8RnkLKQGO2f3Bb fzCeMYz4S6oxLAy Cco4N255JFzv2PX E6WWdobANV4guJI iEE8XJb6uudCX4x QWZfnamVAaZpXuW vdz65rE7oZsLSdW oxMsbBgG9NVpSJy x3CD6LaC9GlZ4IS ofzkHe401mHjr7M M. END KEYBASE SALTPACK DETACHED SIGNATURE.`

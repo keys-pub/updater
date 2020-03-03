@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/keybase/go-updater"
-	"github.com/keybase/go-updater/util"
+	"github.com/keys-pub/updater"
+	"github.com/keys-pub/updater/util"
 )
 
 // RemoteUpdateSource finds releases/updates from custom url feed (used primarily for testing)

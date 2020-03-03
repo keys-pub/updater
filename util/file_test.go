@@ -97,12 +97,7 @@ func TestIsDirReal(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, ok)
 
-	path := os.Getenv("GOPATH")
-	ok, err = IsDirReal(path)
-	assert.NoError(t, err)
-	assert.True(t, ok)
-
-	testFile := filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test.zip")
+	testFile := "../test/test.zip"
 	ok, err = IsDirReal(testFile)
 	assert.Error(t, err)
 	assert.Equal(t, "Path is not a directory", err.Error())

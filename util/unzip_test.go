@@ -5,7 +5,6 @@ package util
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -15,16 +14,16 @@ import (
 )
 
 // testZipPath is a valid zip file
-var testZipPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test.zip")
+var testZipPath = "../test/test.zip"
 
 // testSymZipPath is a valid zip file with a symbolic link
-var testSymZipPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test-with-sym.zip")
+var testSymZipPath = "../test/test-with-sym.zip"
 
 // testCorruptedZipPath is a corrupted zip file (flipped a bit)
-var testCorruptedZipPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test-corrupted2.zip")
+var testCorruptedZipPath = "../test/test-corrupted2.zip"
 
 // testInvalidZipPath is not a valid zip file
-var testInvalidZipPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test-invalid.zip")
+var testInvalidZipPath = "../test/test-invalid.zip"
 
 func assertFileExists(t *testing.T, path string) {
 	t.Logf("Checking %s", path)

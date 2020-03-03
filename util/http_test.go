@@ -208,10 +208,15 @@ func TestDownloadURLError(t *testing.T) {
 }
 
 func TestDownloadURLLocal(t *testing.T) {
-	var testZipPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test.zip")
+	var testZipPath = "../test/test.zip"
+	dest := filepath.Join(os.TempDir(), "test.zip")
+	err := CopyFile(testZipPath, dest)
+	require.NoError(t, err)
+	defer RemoveFileAtPath(dest)
+
 	destinationPath := TempPath("", "TestDownloadURLLocal.")
 	defer RemoveFileAtPath(destinationPath)
-	err := DownloadURL(URLStringForPath(testZipPath), destinationPath, DownloadURLOptions{})
+	err = DownloadURL(URLStringForPath(dest), destinationPath, DownloadURLOptions{})
 	assert.NoError(t, err)
 
 	exists, err := FileExists(destinationPath)

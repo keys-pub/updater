@@ -6,7 +6,6 @@ package command
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -159,16 +158,28 @@ func TestExecTimeoutProcessKilled(t *testing.T) {
 	assert.NotNil(t, perr, "Should have errored killing since killing non-existant process should error")
 }
 
+func testPath(t *testing.T) string {
+	switch runtime.GOOS {
+	case "darwin":
+		return "../test/test.darwin"
+	case "windows":
+		return "../test/test.exe"
+	default:
+		t.Fatalf("unsupported")
+		return ""
+	}
+}
+
 // TestExecNoExit runs a go binary called test from package go-updater/test,
 // that should be installed prior to running the tests.
 func TestExecNoExit(t *testing.T) {
-	path := filepath.Join(os.Getenv("GOPATH"), "bin", "test")
+	path := testPath(t)
 	_, err := Exec(path, []string{"noexit"}, 10*time.Millisecond)
 	require.EqualError(t, err, "Timed out")
 }
 
 func TestExecOutput(t *testing.T) {
-	path := filepath.Join(os.Getenv("GOPATH"), "bin", "test")
+	path := testPath(t)
 	result, err := execWithFunc(path, []string{"output"}, nil, exec.Command, time.Second)
 	assert.NoError(t, err)
 	assert.Equal(t, "stdout output\n", result.Stdout.String())

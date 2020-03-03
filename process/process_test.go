@@ -12,14 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keybase/go-logging"
 	"github.com/keybase/go-ps"
-	"github.com/keybase/go-updater/util"
+	"github.com/keys-pub/updater/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var testLog = &logging.Logger{Module: "test"}
 
 var matchAll = func(p ps.Process) bool { return true }
 
@@ -32,17 +29,21 @@ func cleanupProc(cmd *exec.Cmd, procPath string) {
 	}
 }
 
-func procTestPath(name string) (string, string) {
-	// Copy test executable to tmp
-	if runtime.GOOS == "windows" {
-		return filepath.Join(os.Getenv("GOPATH"), "bin", "test.exe"), filepath.Join(os.TempDir(), name+".exe")
+func procTestPath(t *testing.T, name string) (string, string) {
+	switch runtime.GOOS {
+	case "darwin":
+		return "../test/test.darwin", filepath.Join(os.TempDir(), name)
+	case "windows":
+		return "../test/test.exe", filepath.Join(os.TempDir(), name+".exe")
+	default:
+		t.Fatalf("unsupported")
+		return "", ""
 	}
-	return filepath.Join(os.Getenv("GOPATH"), "bin", "test"), filepath.Join(os.TempDir(), name)
 }
 
 func procPath(t *testing.T, name string) string {
 	// Copy test executable to tmp
-	srcPath, destPath := procTestPath(name)
+	srcPath, destPath := procTestPath(t, name)
 	err := util.CopyFile(srcPath, destPath)
 	require.NoError(t, err)
 	err = os.Chmod(destPath, 0777)

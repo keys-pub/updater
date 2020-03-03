@@ -145,24 +145,32 @@ func TestExitOnSuccess(t *testing.T) {
 	assert.Equal(t, 0, len(procsAfter))
 }
 
-func procTestPath(name string) (string, string) {
-	// Copy test executable to tmp
-	if runtime.GOOS == "windows" {
-		return filepath.Join(os.Getenv("GOPATH"), "bin", "test.exe"), filepath.Join(os.TempDir(), name+".exe")
+func procTestPath(t *testing.T, name string) (string, string) {
+	switch runtime.GOOS {
+	case "darwin":
+		return "../test/test.darwin", filepath.Join(os.TempDir(), name)
+	case "windows":
+		return "../test/test.exe", filepath.Join(os.TempDir(), name+".exe")
+	default:
+		t.Fatalf("unsupported")
+		return "", ""
 	}
-	return filepath.Join(os.Getenv("GOPATH"), "bin", "test"), filepath.Join(os.TempDir(), name)
 }
 
 // procProgram returns a testable unique program at a temporary location
 func procProgram(t *testing.T, name string, testCommand string) Program {
-	path, procPath := procTestPath(name)
+	path, procPath := procTestPath(t, name)
 	err := util.CopyFile(path, procPath)
 	require.NoError(t, err)
 	err = os.Chmod(procPath, 0777)
 	require.NoError(t, err)
+	_, err = os.Stat(procPath)
+	require.NoError(t, err)
+	
 	// Temp dir might have symlinks in which case we need the eval'ed path
 	procPath, err = filepath.EvalSymlinks(procPath)
 	require.NoError(t, err)
+
 	return Program{
 		Path: procPath,
 		Args: []string{testCommand},

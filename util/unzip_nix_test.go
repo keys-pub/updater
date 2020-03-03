@@ -25,7 +25,7 @@ func TestUnzipOtherUser(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Unsupported on windows")
 	}
-	var testZipOtherUserPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test-uid-503.zip")
+	var testZipOtherUserPath = "../test/test-uid-503.zip"
 	destinationPath := TempPath("", "TestUnzipOtherUser.")
 	err := Unzip(testZipOtherUserPath, destinationPath)
 	require.NoError(t, err)

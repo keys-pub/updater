@@ -5,6 +5,7 @@ package updater
 
 import "time"
 
+// DefaultTickDuration is the default update check.
 const DefaultTickDuration = time.Hour
 
 // UpdateChecker runs updates checks every check duration
@@ -12,17 +13,15 @@ type UpdateChecker struct {
 	updater      *Updater
 	ctx          Context
 	ticker       *time.Ticker
-	log          Log
 	tickDuration time.Duration // tickDuration is the ticker delay
 	count        int           // count is number of times we've checked
 }
 
 // NewUpdateChecker creates an update checker
-func NewUpdateChecker(updater *Updater, ctx Context, tickDuration time.Duration, log Log) UpdateChecker {
+func NewUpdateChecker(updater *Updater, ctx Context, tickDuration time.Duration) UpdateChecker {
 	return UpdateChecker{
 		updater:      updater,
 		ctx:          ctx,
-		log:          log,
 		tickDuration: tickDuration,
 	}
 }
@@ -38,7 +37,7 @@ func (u *UpdateChecker) check() error {
 func (u *UpdateChecker) Check() {
 	u.updater.config.SetLastUpdateCheckTime()
 	if err := u.check(); err != nil {
-		u.log.Errorf("Error in update: %s", err)
+		logger.Errorf("Error in update: %s", err)
 	}
 }
 
@@ -56,9 +55,9 @@ func (u *UpdateChecker) Start() bool {
 			u.Check()
 		}
 
-		u.log.Debugf("Starting (ticker %s)", u.tickDuration)
+		logger.Debugf("Starting (ticker %s)", u.tickDuration)
 		for range u.ticker.C {
-			u.log.Debugf("%s", "Checking for update (ticker)")
+			logger.Debugf("%s", "Checking for update (ticker)")
 			u.Check()
 		}
 	}()

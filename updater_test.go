@@ -16,16 +16,13 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/keybase/go-logging"
-	"github.com/keybase/go-updater/saltpack"
-	"github.com/keybase/go-updater/util"
+	"github.com/keys-pub/updater/saltpack"
+	"github.com/keys-pub/updater/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var testLog = &logging.Logger{Module: "test"}
-
-var testZipPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test.zip")
+var testZipPath = "./test/test.zip"
 
 var testAppStatePath = filepath.Join(os.TempDir(), "KBTest_app_state.json")
 
@@ -34,7 +31,7 @@ func newTestUpdater(t *testing.T) (*Updater, error) {
 }
 
 func newTestUpdaterWithServer(t *testing.T, testServer *httptest.Server, update *Update, config Config) (*Updater, error) {
-	return NewUpdater(testUpdateSource{testServer: testServer, config: config, update: update}, config, testLog), nil
+	return NewUpdater(testUpdateSource{testServer: testServer, config: config, update: update}, config), nil
 }
 
 func newTestContext(options UpdateOptions, cfg Config, response *UpdatePromptResponse) *testUpdateUI {
@@ -91,7 +88,7 @@ func (u testUpdateUI) Verify(update Update) error {
 	var validCodeSigningKIDs = map[string]bool{
 		"9092ae4e790763dc7343851b977930f35b16cf43ab0ad900a2af3d3ad5cea1a1": true,
 	}
-	return saltpack.VerifyDetachedFileAtPath(update.Asset.LocalPath, update.Asset.Signature, validCodeSigningKIDs, testLog)
+	return saltpack.VerifyDetachedFileAtPath(update.Asset.LocalPath, update.Asset.Signature, validCodeSigningKIDs)
 }
 
 func (u *testUpdateUI) ReportError(err error, update *Update, options UpdateOptions) {

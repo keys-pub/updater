@@ -3,7 +3,7 @@
 The goals of this library are to provide an updater that:
 
 - Is simple
-- Works on all our platforms (at least OS X, Windows, Linux)
+- Works on all our platforms (at least macOS, Windows, Linux)
 - Recovers from non-fatal errors
 - Every request or command execution should timeout (nothing blocks)
 - Can recover from failures in its environment
@@ -20,7 +20,7 @@ The main package is the updater core, there are other support packages:
 
 - command: Executes a command with a timeout
 - osx: MacOS specific UI
-- process: Utilities to find and terminate Processes
+- process: Utilities to find and terminate processes
 - saltpack: Verify updates with [Saltpack](https://saltpack.org/)
 - sources: Update sources for remote locations (like S3), or locally (for testing)
 - test: Test resources

@@ -7,13 +7,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"time"
 
 	"github.com/kardianos/osext"
-	"github.com/keybase/go-logging"
-	"github.com/keybase/go-updater/command"
+	"github.com/keys-pub/updater/command"
 )
 
 // Copied here since it is not exported from go-updater/keybase
@@ -26,8 +26,6 @@ type updaterPromptInput struct {
 }
 
 func main() {
-	var testLog = &logging.Logger{Module: "test"}
-
 	exePathName, _ := osext.Executable()
 	pathName, _ := filepath.Split(exePathName)
 	outPathName := filepath.Join(pathName, "out.txt")
@@ -40,25 +38,25 @@ func main() {
 		OutPath:     outPathName,
 	})
 	if err != nil {
-		testLog.Errorf("Error generating input: %s", err)
+		fmt.Errorf("Error generating input: %s", err)
 		return
 	}
 
 	path := filepath.Join(pathName, "WpfApplication1\\bin\\Release\\prompter.exe")
 
-	testLog.Debugf("Executing: %s %s", path, string(string(promptJSONInput)))
+	fmt.Printf("Executing: %s %s", path, string(string(promptJSONInput)))
 
 	_, err = command.Exec(path, []string{string(promptJSONInput)}, 100*time.Second, testLog)
 	if err != nil {
-		testLog.Errorf("Error: %v", err)
+		fmt.Errorf("Error: %v", err)
 		return
 	}
 
 	result, err := ioutil.ReadFile(outPathName)
 	if err != nil {
-		testLog.Errorf("Error opening result file: %v", err)
+		fmt.Errorf("Error opening result file: %v", err)
 		return
 	}
 
-	testLog.Debugf("Result: %s", string(result))
+	fmt.Printf("Result: %s", string(result))
 }

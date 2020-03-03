@@ -17,7 +17,6 @@ type Matcher struct {
 	match     string
 	matchType MatchType
 	exceptPID int
-	log       Log
 }
 
 // MatchType is how to match
@@ -35,8 +34,8 @@ const (
 )
 
 // NewMatcher returns a new matcher
-func NewMatcher(match string, matchType MatchType, log Log) Matcher {
-	return Matcher{match: match, matchType: matchType, log: log}
+func NewMatcher(match string, matchType MatchType) Matcher {
+	return Matcher{match: match, matchType: matchType}
 }
 
 // ExceptPID will not match specified pid

@@ -43,7 +43,7 @@ func procTestPath(name string) (string, string) {
 func procPath(t *testing.T, name string) string {
 	// Copy test executable to tmp
 	srcPath, destPath := procTestPath(name)
-	err := util.CopyFile(srcPath, destPath, testLog)
+	err := util.CopyFile(srcPath, destPath)
 	require.NoError(t, err)
 	err = os.Chmod(destPath, 0777)
 	require.NoError(t, err)
@@ -54,21 +54,21 @@ func procPath(t *testing.T, name string) string {
 }
 
 func TestFindPIDsWithFn(t *testing.T) {
-	pids, err := findPIDsWithFn(ps.Processes, matchAll, testLog)
+	pids, err := findPIDsWithFn(ps.Processes, matchAll)
 	assert.NoError(t, err)
 	assert.True(t, len(pids) > 1)
 
 	fn := func() ([]ps.Process, error) {
 		return nil, fmt.Errorf("Testing error")
 	}
-	processes, err := findPIDsWithFn(fn, matchAll, testLog)
+	processes, err := findPIDsWithFn(fn, matchAll)
 	assert.Nil(t, processes)
 	assert.Error(t, err)
 
 	fn = func() ([]ps.Process, error) {
 		return nil, nil
 	}
-	processes, err = findPIDsWithFn(fn, matchAll, testLog)
+	processes, err = findPIDsWithFn(fn, matchAll)
 	assert.Equal(t, []int{}, processes)
 	assert.NoError(t, err)
 }
@@ -81,7 +81,7 @@ func TestTerminatePID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cmd.Process)
 
-	err = TerminatePID(cmd.Process.Pid, time.Millisecond, testLog)
+	err = TerminatePID(cmd.Process.Pid, time.Millisecond)
 	assert.NoError(t, err)
 }
 
@@ -94,7 +94,7 @@ func assertTerminated(t *testing.T, pid int, stateStr string) {
 }
 
 func TestTerminatePIDInvalid(t *testing.T) {
-	err := TerminatePID(-5, time.Millisecond, testLog)
+	err := TerminatePID(-5, time.Millisecond)
 	assert.Error(t, err)
 }
 
@@ -102,12 +102,12 @@ func TestTerminateAllFn(t *testing.T) {
 	fn := func() ([]ps.Process, error) {
 		return nil, fmt.Errorf("Testing error")
 	}
-	TerminateAllWithProcessesFn(fn, matchAll, time.Millisecond, testLog)
+	TerminateAllWithProcessesFn(fn, matchAll, time.Millisecond)
 
 	fn = func() ([]ps.Process, error) {
 		return nil, nil
 	}
-	TerminateAllWithProcessesFn(fn, matchAll, time.Millisecond, testLog)
+	TerminateAllWithProcessesFn(fn, matchAll, time.Millisecond)
 }
 
 func startProcess(t *testing.T, path string, testCommand string) (string, int, *exec.Cmd) {
@@ -121,14 +121,14 @@ func startProcess(t *testing.T, path string, testCommand string) (string, int, *
 func TestTerminateAllPathEqual(t *testing.T) {
 	procPath := procPath(t, "testTerminateAllPathEqual")
 	defer util.RemoveFileAtPath(procPath)
-	matcher := NewMatcher(procPath, PathEqual, testLog)
+	matcher := NewMatcher(procPath, PathEqual)
 	testTerminateAll(t, procPath, matcher, 2)
 }
 
 func TestTerminateAllExecutableEqual(t *testing.T) {
 	procPath := procPath(t, "testTerminateAllExecutableEqual")
 	defer util.RemoveFileAtPath(procPath)
-	matcher := NewMatcher(filepath.Base(procPath), ExecutableEqual, testLog)
+	matcher := NewMatcher(filepath.Base(procPath), ExecutableEqual)
 	testTerminateAll(t, procPath, matcher, 2)
 }
 
@@ -138,7 +138,7 @@ func TestTerminateAllPathContains(t *testing.T) {
 	procDir, procFile := filepath.Split(procPath)
 	match := procDir[1:] + procFile[:20]
 	t.Logf("Match: %q", match)
-	matcher := NewMatcher(match, PathContains, testLog)
+	matcher := NewMatcher(match, PathContains)
 	testTerminateAll(t, procPath, matcher, 2)
 }
 
@@ -148,7 +148,7 @@ func TestTerminateAllPathPrefix(t *testing.T) {
 	procDir, procFile := filepath.Split(procPath)
 	match := procDir + procFile[:20]
 	t.Logf("Match: %q", match)
-	matcher := NewMatcher(match, PathPrefix, testLog)
+	matcher := NewMatcher(match, PathPrefix)
 	testTerminateAll(t, procPath, matcher, 2)
 }
 
@@ -170,7 +170,7 @@ func testTerminateAll(t *testing.T, path string, matcher Matcher, numProcs int) 
 
 	time.Sleep(time.Second)
 
-	terminatePids := TerminateAll(matcher, time.Second, testLog)
+	terminatePids := TerminateAll(matcher, time.Second)
 	for _, p := range pids {
 		assert.Contains(t, terminatePids, p)
 		assertTerminated(t, p, exitStatus)
@@ -183,7 +183,7 @@ func TestFindProcessWait(t *testing.T) {
 	defer cleanupProc(cmd, procPath)
 
 	// Ensure it's not already running
-	procs, err := FindProcesses(NewMatcher(procPath, PathEqual, testLog), time.Millisecond, 0, testLog)
+	procs, err := FindProcesses(NewMatcher(procPath, PathEqual), time.Millisecond, 0)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(procs))
 
@@ -194,7 +194,7 @@ func TestFindProcessWait(t *testing.T) {
 	}()
 
 	// Wait up to second for process to be running
-	procs, err = FindProcesses(NewMatcher(procPath, PathEqual, testLog), time.Second, 10*time.Millisecond, testLog)
+	procs, err = FindProcesses(NewMatcher(procPath, PathEqual), time.Second, 10*time.Millisecond)
 	require.NoError(t, err)
 	require.True(t, len(procs) == 1)
 }

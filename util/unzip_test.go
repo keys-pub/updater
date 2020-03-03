@@ -38,7 +38,7 @@ func testUnzipOverValid(t *testing.T, path string) string {
 
 	noCheck := func(sourcePath, destinationPath string) error { return nil }
 
-	err := UnzipOver(path, "test", destinationPath, noCheck, "", testLog)
+	err := UnzipOver(path, "test", destinationPath, noCheck, "")
 	require.NoError(t, err)
 
 	dirExists, err := FileExists(destinationPath)
@@ -51,7 +51,7 @@ func testUnzipOverValid(t *testing.T, path string) string {
 	assertFileExists(t, filepath.Join(destinationPath, "testfolder", "testsubfolder", "testfile2"))
 
 	// Unzip again over existing path
-	err = UnzipOver(path, "test", destinationPath, noCheck, "", testLog)
+	err = UnzipOver(path, "test", destinationPath, noCheck, "")
 	require.NoError(t, err)
 
 	dirExists2, err := FileExists(destinationPath)
@@ -64,7 +64,7 @@ func testUnzipOverValid(t *testing.T, path string) string {
 
 	// Unzip again over existing path, fail check
 	failCheck := func(sourcePath, destinationPath string) error { return fmt.Errorf("Failed check") }
-	err = UnzipOver(testZipPath, "test", destinationPath, failCheck, "", testLog)
+	err = UnzipOver(testZipPath, "test", destinationPath, failCheck, "")
 	assert.Error(t, err)
 
 	return destinationPath
@@ -86,18 +86,18 @@ func TestUnzipOverSymlink(t *testing.T) {
 
 func TestUnzipOverInvalidPath(t *testing.T) {
 	noCheck := func(sourcePath, destinationPath string) error { return nil }
-	err := UnzipOver(testZipPath, "test", "", noCheck, "", testLog)
+	err := UnzipOver(testZipPath, "test", "", noCheck, "")
 	assert.Error(t, err)
 
 	destinationPath := TempPath("", "TestUnzipOverInvalidPath.")
 	defer RemoveFileAtPath(destinationPath)
-	err = UnzipOver("/badfile.zip", "test", destinationPath, noCheck, "", testLog)
+	err = UnzipOver("/badfile.zip", "test", destinationPath, noCheck, "")
 	assert.Error(t, err)
 
-	err = UnzipOver("", "test", destinationPath, noCheck, "", testLog)
+	err = UnzipOver("", "test", destinationPath, noCheck, "")
 	assert.Error(t, err)
 
-	err = unzipOver("", "", testLog)
+	err = unzipOver("", "")
 	assert.Error(t, err)
 }
 
@@ -105,7 +105,7 @@ func TestUnzipOverInvalidZip(t *testing.T) {
 	noCheck := func(sourcePath, destinationPath string) error { return nil }
 	destinationPath := TempPath("", "TestUnzipOverInvalidZip.")
 	defer RemoveFileAtPath(destinationPath)
-	err := UnzipOver(testInvalidZipPath, "test", destinationPath, noCheck, "", testLog)
+	err := UnzipOver(testInvalidZipPath, "test", destinationPath, noCheck, "")
 	t.Logf("Error: %s", err)
 	assert.Error(t, err)
 }
@@ -114,7 +114,7 @@ func TestUnzipOverInvalidContents(t *testing.T) {
 	noCheck := func(sourcePath, destinationPath string) error { return nil }
 	destinationPath := TempPath("", "TestUnzipOverInvalidContents.")
 	defer RemoveFileAtPath(destinationPath)
-	err := UnzipOver(testInvalidZipPath, "invalid", destinationPath, noCheck, "", testLog)
+	err := UnzipOver(testInvalidZipPath, "invalid", destinationPath, noCheck, "")
 	t.Logf("Error: %s", err)
 	assert.Error(t, err)
 }
@@ -123,14 +123,14 @@ func TestUnzipOverCorrupted(t *testing.T) {
 	noCheck := func(sourcePath, destinationPath string) error { return nil }
 	destinationPath := TempPath("", "TestUnzipOverCorrupted.")
 	defer RemoveFileAtPath(destinationPath)
-	err := UnzipOver(testCorruptedZipPath, "test", destinationPath, noCheck, "", testLog)
+	err := UnzipOver(testCorruptedZipPath, "test", destinationPath, noCheck, "")
 	t.Logf("Error: %s", err)
 	assert.Error(t, err)
 }
 
 func tempDir(t *testing.T) string {
 	tmpDir := TempPath("", "TestUnzipOver")
-	err := MakeDirs(tmpDir, 0700, testLog)
+	err := MakeDirs(tmpDir, 0700)
 	require.NoError(t, err)
 	return tmpDir
 }
@@ -141,9 +141,9 @@ func TestUnzipOverMoveExisting(t *testing.T) {
 	defer RemoveFileAtPath(destinationPath)
 	tmpDir := tempDir(t)
 	defer RemoveFileAtPath(tmpDir)
-	err := UnzipOver(testZipPath, "test", destinationPath, noCheck, tmpDir, testLog)
+	err := UnzipOver(testZipPath, "test", destinationPath, noCheck, tmpDir)
 	assert.NoError(t, err)
-	err = UnzipOver(testZipPath, "test", destinationPath, noCheck, tmpDir, testLog)
+	err = UnzipOver(testZipPath, "test", destinationPath, noCheck, tmpDir)
 	assert.NoError(t, err)
 
 	assertFileExists(t, filepath.Join(tmpDir, filepath.Base(destinationPath)))

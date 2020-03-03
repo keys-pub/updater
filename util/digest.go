@@ -12,7 +12,7 @@ import (
 )
 
 // CheckDigest returns no error if digest matches file
-func CheckDigest(digest string, path string, log Log) error {
+func CheckDigest(digest string, path string) error {
 	if digest == "" {
 		return fmt.Errorf("Missing digest")
 	}
@@ -23,7 +23,7 @@ func CheckDigest(digest string, path string, log Log) error {
 	if calcDigest != digest {
 		return fmt.Errorf("Invalid digest: %s != %s (%s)", calcDigest, digest, path)
 	}
-	log.Infof("Verified digest: %s (%s)", digest, path)
+	logger.Infof("Verified digest: %s (%s)", digest, path)
 	return nil
 }
 

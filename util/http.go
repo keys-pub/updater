@@ -46,7 +46,7 @@ func DiscardAndCloseBody(resp *http.Response) error {
 }
 
 // SaveHTTPResponse saves an http.Response to path
-func SaveHTTPResponse(resp *http.Response, savePath string, mode os.FileMode, log Log) error {
+func SaveHTTPResponse(resp *http.Response, savePath string, mode os.FileMode) error {
 	if resp == nil {
 		return fmt.Errorf("No response")
 	}
@@ -56,10 +56,10 @@ func SaveHTTPResponse(resp *http.Response, savePath string, mode os.FileMode, lo
 	}
 	defer Close(file)
 
-	log.Infof("Downloading to %s", savePath)
+	logger.Infof("Downloading to %s", savePath)
 	n, err := io.Copy(file, resp.Body)
 	if err == nil {
-		log.Infof("Downloaded %d bytes", n)
+		logger.Infof("Downloaded %d bytes", n)
 	}
 	return err
 }
@@ -86,7 +86,7 @@ func parseURL(urlString string) (*url.URL, error) {
 }
 
 // URLExists returns error if URL doesn't exist
-func URLExists(urlString string, timeout time.Duration, log Log) (bool, error) {
+func URLExists(urlString string, timeout time.Duration) (bool, error) {
 	url, err := parseURL(urlString)
 	if err != nil {
 		return false, err
@@ -97,7 +97,7 @@ func URLExists(urlString string, timeout time.Duration, log Log) (bool, error) {
 		return FileExists(PathFromURL(url))
 	}
 
-	log.Debugf("Checking URL exists: %s", urlString)
+	logger.Debugf("Checking URL exists: %s", urlString)
 	req, err := http.NewRequest("HEAD", urlString, nil)
 	if err != nil {
 		return false, err
@@ -125,7 +125,6 @@ type DownloadURLOptions struct {
 	RequireDigest bool
 	UseETag       bool
 	Timeout       time.Duration
-	Log           Log
 }
 
 // DownloadURL downloads a URL to a path.
@@ -135,8 +134,6 @@ func DownloadURL(urlString string, destinationPath string, options DownloadURLOp
 }
 
 func downloadURL(urlString string, destinationPath string, options DownloadURLOptions) (cached bool, _ error) {
-	log := options.Log
-
 	url, err := parseURL(urlString)
 	if err != nil {
 		return false, err
@@ -153,7 +150,7 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 		if _, statErr := os.Stat(destinationPath); statErr == nil {
 			computedEtag, etagErr := ComputeEtag(destinationPath)
 			if etagErr != nil {
-				log.Warningf("Error computing etag", etagErr)
+				logger.Warningf("Error computing etag", etagErr)
 			} else {
 				etag = computedEtag
 			}
@@ -165,7 +162,7 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 		return cached, err
 	}
 	if etag != "" {
-		log.Infof("Using etag: %s", etag)
+		logger.Infof("Using etag: %s", etag)
 		req.Header.Set("If-None-Match", etag)
 	}
 	var client http.Client
@@ -174,7 +171,7 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 	} else {
 		client = http.Client{}
 	}
-	log.Infof("Request %s", url.String())
+	logger.Infof("Request %s", url.String())
 	resp, requestErr := client.Do(req)
 	if requestErr != nil {
 		return cached, requestErr
@@ -186,7 +183,7 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 	if resp.StatusCode == http.StatusNotModified {
 		cached = true
 		// ETag matched, we already have it
-		log.Infof("Using cached file: %s", destinationPath)
+		logger.Infof("Using cached file: %s", destinationPath)
 		return cached, nil
 	}
 	if resp.StatusCode != http.StatusOK {
@@ -195,27 +192,27 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 
 	savePath := fmt.Sprintf("%s.download", destinationPath)
 	if _, ferr := os.Stat(savePath); ferr == nil {
-		log.Infof("Removing existing partial download: %s", savePath)
+		logger.Infof("Removing existing partial download: %s", savePath)
 		if rerr := os.Remove(savePath); rerr != nil {
 			return cached, fmt.Errorf("Error removing existing partial download: %s", rerr)
 		}
 	}
 
-	if err := MakeParentDirs(savePath, 0700, log); err != nil {
+	if err := MakeParentDirs(savePath, 0700); err != nil {
 		return cached, err
 	}
 
-	if err := SaveHTTPResponse(resp, savePath, 0600, log); err != nil {
+	if err := SaveHTTPResponse(resp, savePath, 0600); err != nil {
 		return cached, err
 	}
 
 	if options.RequireDigest {
-		if err := CheckDigest(options.Digest, savePath, log); err != nil {
+		if err := CheckDigest(options.Digest, savePath); err != nil {
 			return cached, err
 		}
 	}
 
-	if err := MoveFile(savePath, destinationPath, "", log); err != nil {
+	if err := MoveFile(savePath, destinationPath, ""); err != nil {
 		return cached, err
 	}
 
@@ -223,12 +220,12 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 }
 
 func downloadLocal(localPath string, destinationPath string, options DownloadURLOptions) error {
-	if err := CopyFile(localPath, destinationPath, options.Log); err != nil {
+	if err := CopyFile(localPath, destinationPath); err != nil {
 		return err
 	}
 
 	if options.RequireDigest {
-		if err := CheckDigest(options.Digest, destinationPath, options.Log); err != nil {
+		if err := CheckDigest(options.Digest, destinationPath); err != nil {
 			return err
 		}
 	}

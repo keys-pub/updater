@@ -22,12 +22,12 @@ import (
 //
 // To unzip Keybase-1.2.3.zip and move the contents Keybase.app to /Applications/Keybase.app
 //
-//   UnzipOver("/tmp/Keybase-1.2.3.zip", "Keybase.app", "/Applications/Keybase.app", check, "", log)
+//   UnzipOver("/tmp/Keybase-1.2.3.zip", "Keybase.app", "/Applications/Keybase.app", check, "")
 //
-func UnzipOver(sourcePath string, path string, destinationPath string, check func(sourcePath, destinationPath string) error, tmpDir string, log Log) error {
+func UnzipOver(sourcePath string, path string, destinationPath string, check func(sourcePath, destinationPath string) error, tmpDir string) error {
 	unzipPath := fmt.Sprintf("%s.unzipped", sourcePath)
 	defer RemoveFileAtPath(unzipPath)
-	err := unzipOver(sourcePath, unzipPath, log)
+	err := unzipOver(sourcePath, unzipPath)
 	if err != nil {
 		return err
 	}
@@ -39,47 +39,47 @@ func UnzipOver(sourcePath string, path string, destinationPath string, check fun
 		return err
 	}
 
-	return MoveFile(contentPath, destinationPath, tmpDir, log)
+	return MoveFile(contentPath, destinationPath, tmpDir)
 }
 
 // UnzipPath unzips and returns path to unzipped directory
-func UnzipPath(sourcePath string, log Log) (string, error) {
+func UnzipPath(sourcePath string) (string, error) {
 	unzipPath := fmt.Sprintf("%s.unzipped", sourcePath)
-	err := unzipOver(sourcePath, unzipPath, log)
+	err := unzipOver(sourcePath, unzipPath)
 	if err != nil {
 		return "", err
 	}
 	return unzipPath, nil
 }
 
-func unzipOver(sourcePath string, destinationPath string, log Log) error {
+func unzipOver(sourcePath string, destinationPath string) error {
 	if destinationPath == "" {
 		return fmt.Errorf("Invalid destination %q", destinationPath)
 	}
 
 	if _, ferr := os.Stat(destinationPath); ferr == nil {
-		log.Infof("Removing existing unzip destination path: %s", destinationPath)
+		logger.Infof("Removing existing unzip destination path: %s", destinationPath)
 		err := os.RemoveAll(destinationPath)
 		if err != nil {
 			return err
 		}
 	}
 
-	log.Infof("Unzipping %q to %q", sourcePath, destinationPath)
-	return Unzip(sourcePath, destinationPath, log)
+	logger.Infof("Unzipping %q to %q", sourcePath, destinationPath)
+	return Unzip(sourcePath, destinationPath)
 }
 
 // Unzip unpacks a zip file to a destination.
 // This unpacks files using the current user and time (it doesn't preserve).
 // This code was modified from https://stackoverflow.com/questions/20357223/easy-way-to-unzip-file-with-golang/20357902
-func Unzip(sourcePath, destinationPath string, log Log) error {
+func Unzip(sourcePath, destinationPath string) error {
 	r, err := zip.OpenReader(sourcePath)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if closeErr := r.Close(); closeErr != nil {
-			log.Warningf("Error in unzip closing zip file: %s", closeErr)
+			logger.Warningf("Error in unzip closing zip file: %s", closeErr)
 		}
 	}()
 
@@ -96,7 +96,7 @@ func Unzip(sourcePath, destinationPath string, log Log) error {
 		}
 		defer func() {
 			if err := rc.Close(); err != nil {
-				log.Warningf("Error in unzip closing file: %s", err)
+				logger.Warningf("Error in unzip closing file: %s", err)
 			}
 		}()
 

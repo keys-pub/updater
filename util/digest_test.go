@@ -15,18 +15,18 @@ func TestDigest(t *testing.T) {
 	assert.NoError(t, err)
 	defer RemoveFileAtPath(path)
 
-	err = CheckDigest("0c15e883dee85bb2f3540a47ec58f617a2547117f9096417ba5422268029f501", path, testLog)
+	err = CheckDigest("0c15e883dee85bb2f3540a47ec58f617a2547117f9096417ba5422268029f501", path)
 	assert.NoError(t, err)
 
-	err = CheckDigest("bad", path, testLog)
+	err = CheckDigest("bad", path)
 	assert.Error(t, err)
 
-	err = CheckDigest("", path, testLog)
+	err = CheckDigest("", path)
 	assert.Error(t, err)
 }
 
 func TestDigestInvalidPath(t *testing.T) {
-	err := CheckDigest("0c15e883dee85bb2f3540a47ec58f617a2547117f9096417ba5422268029f501", "/tmp/invalidpath", testLog)
+	err := CheckDigest("0c15e883dee85bb2f3540a47ec58f617a2547117f9096417ba5422268029f501", "/tmp/invalidpath")
 	t.Logf("Error: %#v", err)
 	assert.Error(t, err)
 }

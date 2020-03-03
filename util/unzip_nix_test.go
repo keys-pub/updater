@@ -27,7 +27,7 @@ func TestUnzipOtherUser(t *testing.T) {
 	}
 	var testZipOtherUserPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test-uid-503.zip")
 	destinationPath := TempPath("", "TestUnzipOtherUser.")
-	err := Unzip(testZipOtherUserPath, destinationPath, testLog)
+	err := Unzip(testZipOtherUserPath, destinationPath)
 	require.NoError(t, err)
 
 	// Get uid, gid of current user
@@ -50,7 +50,7 @@ func TestUnzipFileModTime(t *testing.T) {
 	now := time.Now().Add(-time.Second)
 	t.Logf("Now: %s", now)
 	destinationPath := TempPath("", "TestUnzipFileModTime.")
-	err := Unzip(testZipPath, destinationPath, testLog)
+	err := Unzip(testZipPath, destinationPath)
 	require.NoError(t, err)
 
 	fileInfo, err := os.Stat(filepath.Join(destinationPath, "test"))

@@ -24,7 +24,7 @@ func TestNewFile(t *testing.T) {
 	defer RemoveFileAtPath(filename)
 
 	f := NewFile(filename, []byte("somedata"), 0600)
-	err := f.Save(testLog)
+	err := f.Save()
 	assert.NoError(t, err)
 
 	fileInfo, err := os.Stat(filename)
@@ -43,7 +43,7 @@ func TestMakeParentDirs(t *testing.T) {
 	file := filepath.Join(dir, "testfile")
 	defer RemoveFileAtPath(file)
 
-	err := MakeParentDirs(file, 0700, testLog)
+	err := MakeParentDirs(file, 0700)
 	assert.NoError(t, err)
 
 	exists, err := FileExists(dir)
@@ -58,12 +58,12 @@ func TestMakeParentDirs(t *testing.T) {
 	}
 
 	// Test making dir that already exists
-	err = MakeParentDirs(file, 0700, testLog)
+	err = MakeParentDirs(file, 0700)
 	assert.NoError(t, err)
 }
 
 func TestMakeParentDirsInvalid(t *testing.T) {
-	err := MakeParentDirs("\\\\invalid", 0700, testLog)
+	err := MakeParentDirs("\\\\invalid", 0700)
 	if runtime.GOOS != "windows" {
 		assert.EqualError(t, err, "No base directory")
 	} else {
@@ -133,7 +133,7 @@ func TestMoveFileValid(t *testing.T) {
 	defer RemoveFileAtPath(sourcePath)
 	assert.NoError(t, err)
 
-	err = MoveFile(sourcePath, destinationPath, "", testLog)
+	err = MoveFile(sourcePath, destinationPath, "")
 	assert.NoError(t, err)
 	exists, err := FileExists(destinationPath)
 	assert.NoError(t, err)
@@ -148,7 +148,7 @@ func TestMoveFileValid(t *testing.T) {
 	// Move again with different source data, and overwrite
 	sourcePath2, err := WriteTempFile("TestMoveFile", []byte("test2"), 0600)
 	assert.NoError(t, err)
-	err = MoveFile(sourcePath2, destinationPath, "", testLog)
+	err = MoveFile(sourcePath2, destinationPath, "")
 	assert.NoError(t, err)
 	exists, err = FileExists(destinationPath)
 	assert.NoError(t, err)
@@ -169,7 +169,7 @@ func TestMoveFileDirValid(t *testing.T) {
 	defer RemoveFileAtPath(sourcePath)
 	assert.NoError(t, err)
 
-	err = MoveFile(sourcePath, destinationPath, "", testLog)
+	err = MoveFile(sourcePath, destinationPath, "")
 	assert.NoError(t, err)
 	exists, err := FileExists(destinationPath)
 	assert.NoError(t, err)
@@ -179,7 +179,7 @@ func TestMoveFileDirValid(t *testing.T) {
 	sourcePath2, err := MakeTempDir("TestMoveDir2", 0700)
 	assert.NoError(t, err)
 	defer RemoveFileAtPath(sourcePath2)
-	err = MoveFile(sourcePath2, destinationPath, "", testLog)
+	err = MoveFile(sourcePath2, destinationPath, "")
 	assert.NoError(t, err)
 	exists, err = FileExists(destinationPath)
 	assert.NoError(t, err)
@@ -189,7 +189,7 @@ func TestMoveFileDirValid(t *testing.T) {
 func TestMoveFileInvalidSource(t *testing.T) {
 	sourcePath := "/invalid"
 	destinationPath := TempPath("", "TestMoveFileDestination")
-	err := MoveFile(sourcePath, destinationPath, "", testLog)
+	err := MoveFile(sourcePath, destinationPath, "")
 	assert.Error(t, err)
 
 	exists, err := FileExists(destinationPath)
@@ -200,7 +200,7 @@ func TestMoveFileInvalidSource(t *testing.T) {
 func TestMoveFileInvalidDest(t *testing.T) {
 	sourcePath := "/invalid"
 	destinationPath := TempPath("", "TestMoveFileDestination")
-	err := MoveFile(sourcePath, destinationPath, "", testLog)
+	err := MoveFile(sourcePath, destinationPath, "")
 	assert.Error(t, err)
 
 	exists, err := FileExists(destinationPath)
@@ -216,7 +216,7 @@ func TestCopyFileValid(t *testing.T) {
 	defer RemoveFileAtPath(sourcePath)
 	assert.NoError(t, err)
 
-	err = CopyFile(sourcePath, destinationPath, testLog)
+	err = CopyFile(sourcePath, destinationPath)
 	assert.NoError(t, err)
 	exists, err := FileExists(destinationPath)
 	assert.NoError(t, err)
@@ -228,7 +228,7 @@ func TestCopyFileValid(t *testing.T) {
 	// Move again with different source data, and overwrite
 	sourcePath2, err := WriteTempFile("TestCopyFile", []byte("test2"), 0600)
 	assert.NoError(t, err)
-	err = CopyFile(sourcePath2, destinationPath, testLog)
+	err = CopyFile(sourcePath2, destinationPath)
 	assert.NoError(t, err)
 	exists, err = FileExists(destinationPath)
 	assert.NoError(t, err)
@@ -241,7 +241,7 @@ func TestCopyFileValid(t *testing.T) {
 func TestCopyFileInvalidSource(t *testing.T) {
 	sourcePath := "/invalid"
 	destinationPath := TempPath("", "TestCopyFileDestination")
-	err := CopyFile(sourcePath, destinationPath, testLog)
+	err := CopyFile(sourcePath, destinationPath)
 	assert.Error(t, err)
 
 	exists, err := FileExists(destinationPath)
@@ -252,7 +252,7 @@ func TestCopyFileInvalidSource(t *testing.T) {
 func TestCopyFileInvalidDest(t *testing.T) {
 	sourcePath := "/invalid"
 	destinationPath := TempPath("", "TestCopyFileDestination")
-	err := CopyFile(sourcePath, destinationPath, testLog)
+	err := CopyFile(sourcePath, destinationPath)
 	assert.Error(t, err)
 
 	exists, err := FileExists(destinationPath)

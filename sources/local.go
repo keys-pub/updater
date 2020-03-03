@@ -8,23 +8,21 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/keybase/go-updater"
-	"github.com/keybase/go-updater/util"
+	"github.com/keys-pub/updater"
+	"github.com/keys-pub/updater/util"
 )
 
 // LocalUpdateSource finds releases/updates from a path (used primarily for testing)
 type LocalUpdateSource struct {
 	path     string
 	jsonPath string
-	log      Log
 }
 
 // NewLocalUpdateSource returns local update source
-func NewLocalUpdateSource(path string, jsonPath string, log Log) LocalUpdateSource {
+func NewLocalUpdateSource(path string, jsonPath string) LocalUpdateSource {
 	return LocalUpdateSource{
 		path:     path,
 		jsonPath: jsonPath,
-		log:      log,
 	}
 }
 
@@ -49,6 +47,6 @@ func (k LocalUpdateSource) FindUpdate(options updater.UpdateOptions) (*updater.U
 	update.Asset.URL = fmt.Sprintf("file://%s", k.path)
 	// TODO: Only do if version is newer or forced (this source is used for testing, so ok to hardcode NeedUpdate)
 	update.NeedUpdate = true
-	k.log.Debugf("Returning update: %#v", update)
+	logger.Debugf("Returning update: %#v", update)
 	return &update, nil
 }

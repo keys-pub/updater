@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/keybase/go-updater"
-	"github.com/keybase/go-updater/util"
+	"github.com/keys-pub/updater"
+	"github.com/keys-pub/updater/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +27,7 @@ func TestRemoteUpdateSource(t *testing.T) {
 		fmt.Fprintln(w, string(data))
 	}))
 
-	local := NewRemoteUpdateSource(server.URL, log)
+	local := NewRemoteUpdateSource(server.URL)
 	assert.Equal(t, local.Description(), "Remote")
 
 	update, err := local.FindUpdate(updater.UpdateOptions{})

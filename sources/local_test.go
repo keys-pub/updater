@@ -8,18 +8,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/keybase/go-logging"
-	"github.com/keybase/go-updater"
+	"github.com/keys-pub/updater"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var log = &logging.Logger{Module: "test"}
-
 func TestLocalUpdateSource(t *testing.T) {
 	path := filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/test.zip")
 	jsonPath := filepath.Join(os.Getenv("GOPATH"), "src/github.com/keybase/go-updater/test/update.json")
-	local := NewLocalUpdateSource(path, jsonPath, log)
+	local := NewLocalUpdateSource(path, jsonPath)
 	assert.Equal(t, local.Description(), "Local")
 
 	update, err := local.FindUpdate(updater.UpdateOptions{})

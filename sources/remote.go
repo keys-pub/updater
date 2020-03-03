@@ -17,15 +17,13 @@ import (
 // RemoteUpdateSource finds releases/updates from custom url feed (used primarily for testing)
 type RemoteUpdateSource struct {
 	defaultURI string
-	log        Log
 }
 
 // NewRemoteUpdateSource builds remote update source without defaults. The url used is passed
 // via options instead.
-func NewRemoteUpdateSource(defaultURI string, log Log) RemoteUpdateSource {
+func NewRemoteUpdateSource(defaultURI string) RemoteUpdateSource {
 	return RemoteUpdateSource{
 		defaultURI: defaultURI,
-		log:        log,
 	}
 }
 
@@ -56,7 +54,7 @@ func (r RemoteUpdateSource) FindUpdate(options updater.UpdateOptions) (*updater.
 	client := &http.Client{
 		Timeout: time.Minute,
 	}
-	r.log.Infof("Request %#v", sourceURL)
+	logger.Infof("Request %#v", sourceURL)
 	resp, err := client.Do(req)
 	defer util.DiscardAndCloseBodyIgnoreError(resp)
 	if err != nil {
@@ -74,6 +72,6 @@ func (r RemoteUpdateSource) FindUpdate(options updater.UpdateOptions) (*updater.
 		return nil, fmt.Errorf("Bad updater remote response %s", err)
 	}
 
-	r.log.Debugf("Received update response: %#v", update)
+	logger.Debugf("Received update response: %#v", update)
 	return &update, nil
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func TestExecEchoWindows(t *testing.T) {
-	result, err := Exec("cmd", []string{"/c", "echo", "arg1", "arg2"}, time.Second, testLog)
+	result, err := Exec("cmd", []string{"/c", "echo", "arg1", "arg2"}, time.Second)
 	assert.NoError(t, err)
 	assert.Equal(t, strings.TrimSpace(result.Stdout.String()), "arg1 arg2")
 }

@@ -9,32 +9,26 @@ import (
 	"io"
 	"os"
 
-	"github.com/keybase/go-updater/util"
 	sp "github.com/keybase/saltpack"
 	"github.com/keybase/saltpack/basic"
+	"github.com/keys-pub/updater/util"
 )
 
-// Log is log interface for this package
-type Log interface {
-	Debugf(s string, args ...interface{})
-	Infof(s string, args ...interface{})
-}
-
 // VerifyDetachedFileAtPath verifies a file
-func VerifyDetachedFileAtPath(path string, signature string, validKIDs map[string]bool, log Log) error {
+func VerifyDetachedFileAtPath(path string, signature string, validKIDs map[string]bool) error {
 	file, err := os.Open(path)
 	defer util.Close(file)
 	if err != nil {
 		return err
 	}
-	err = VerifyDetached(file, signature, validKIDs, log)
+	err = VerifyDetached(file, signature, validKIDs)
 	if err != nil {
 		return fmt.Errorf("Error verifying signature: %s", err)
 	}
 	return nil
 }
 
-func checkSender(key sp.BasePublicKey, validKIDs map[string]bool, log Log) error {
+func checkSender(key sp.BasePublicKey, validKIDs map[string]bool) error {
 	if key == nil {
 		return fmt.Errorf("No key")
 	}
@@ -43,21 +37,21 @@ func checkSender(key sp.BasePublicKey, validKIDs map[string]bool, log Log) error
 		return fmt.Errorf("No KID for key")
 	}
 	skid := hex.EncodeToString(kid)
-	log.Infof("Signed by %s", skid)
+	logger.Infof("Signed by %s", skid)
 	if !validKIDs[skid] {
 		return fmt.Errorf("Unknown signer KID: %s", skid)
 	}
-	log.Debugf("Valid KID: %s", skid)
+	logger.Debugf("Valid KID: %s", skid)
 	return nil
 }
 
 // VerifyDetached verifies a message signature
-func VerifyDetached(reader io.Reader, signature string, validKIDs map[string]bool, log Log) error {
+func VerifyDetached(reader io.Reader, signature string, validKIDs map[string]bool) error {
 	if reader == nil {
 		return fmt.Errorf("No reader")
 	}
 	check := func(key sp.BasePublicKey) error {
-		return checkSender(key, validKIDs, log)
+		return checkSender(key, validKIDs)
 	}
 	return VerifyDetachedCheckSender(reader, []byte(signature), check)
 }

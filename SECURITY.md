@@ -1,4 +1,4 @@
-## Security
+# Security
 
 In the future, we will be looking to integrate with [TUF](https://theupdateframework.github.io/)
 in order to make updates more secure. In the meantime, this document describes

@@ -162,6 +162,8 @@ func testPath(t *testing.T) string {
 	switch runtime.GOOS {
 	case "darwin":
 		return "../test/test.darwin"
+	case "linux":
+		return "../test/test.linux"
 	case "windows":
 		return "../test/test.exe"
 	default:

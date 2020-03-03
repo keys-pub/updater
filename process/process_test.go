@@ -33,6 +33,8 @@ func procTestPath(t *testing.T, name string) (string, string) {
 	switch runtime.GOOS {
 	case "darwin":
 		return "../test/test.darwin", filepath.Join(os.TempDir(), name)
+	case "linux":
+		return "../test/test.linux", filepath.Join(os.TempDir(), name)
 	case "windows":
 		return "../test/test.exe", filepath.Join(os.TempDir(), name+".exe")
 	default:

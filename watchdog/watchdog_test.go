@@ -149,6 +149,8 @@ func procTestPath(t *testing.T, name string) (string, string) {
 	switch runtime.GOOS {
 	case "darwin":
 		return "../test/test.darwin", filepath.Join(os.TempDir(), name)
+	case "linux":
+		return "../test/test.linux", filepath.Join(os.TempDir(), name)
 	case "windows":
 		return "../test/test.exe", filepath.Join(os.TempDir(), name+".exe")
 	default:
@@ -166,7 +168,7 @@ func procProgram(t *testing.T, name string, testCommand string) Program {
 	require.NoError(t, err)
 	_, err = os.Stat(procPath)
 	require.NoError(t, err)
-	
+
 	// Temp dir might have symlinks in which case we need the eval'ed path
 	procPath, err = filepath.EvalSymlinks(procPath)
 	require.NoError(t, err)

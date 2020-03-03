@@ -11,14 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keybase/go-logging"
-	"github.com/keybase/go-updater/process"
-	"github.com/keybase/go-updater/util"
+	"github.com/keys-pub/updater/process"
+	"github.com/keys-pub/updater/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var testLog = &logging.Logger{Module: "test"}
 
 func TestWatchMultiple(t *testing.T) {
 	procProgram1 := procProgram(t, "testWatch1", "sleep")
@@ -28,27 +25,27 @@ func TestWatchMultiple(t *testing.T) {
 
 	delay := 10 * time.Millisecond
 
-	err := Watch([]Program{procProgram1, procProgram2}, delay, testLog)
+	err := Watch([]Program{procProgram1, procProgram2}, delay)
 	require.NoError(t, err)
 
-	matcher1 := process.NewMatcher(procProgram1.Path, process.PathEqual, testLog)
-	procs1, err := process.FindProcesses(matcher1, time.Second, 200*time.Millisecond, testLog)
+	matcher1 := process.NewMatcher(procProgram1.Path, process.PathEqual)
+	procs1, err := process.FindProcesses(matcher1, time.Second, 200*time.Millisecond)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(procs1))
 
-	matcher2 := process.NewMatcher(procProgram2.Path, process.PathEqual, testLog)
-	procs2, err := process.FindProcesses(matcher2, time.Second, 200*time.Millisecond, testLog)
+	matcher2 := process.NewMatcher(procProgram2.Path, process.PathEqual)
+	procs2, err := process.FindProcesses(matcher2, time.Second, 200*time.Millisecond)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(procs2))
 	proc2 := procs2[0]
 
-	err = process.TerminatePID(proc2.Pid(), time.Millisecond, testLog)
+	err = process.TerminatePID(proc2.Pid(), time.Millisecond)
 	require.NoError(t, err)
 
 	time.Sleep(2 * delay)
 
 	// Check for restart
-	procs2After, err := process.FindProcesses(matcher2, time.Second, time.Millisecond, testLog)
+	procs2After, err := process.FindProcesses(matcher2, time.Second, time.Millisecond)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(procs2After))
 }
@@ -59,24 +56,24 @@ func TestTerminateBeforeWatch(t *testing.T) {
 	procProgram := procProgram(t, "testTerminateBeforeWatch", "sleep")
 	defer util.RemoveFileAtPath(procProgram.Path)
 
-	matcher := process.NewMatcher(procProgram.Path, process.PathEqual, testLog)
+	matcher := process.NewMatcher(procProgram.Path, process.PathEqual)
 
 	// Launch program (so we can test it gets terminated on watch)
 	err := exec.Command(procProgram.Path, procProgram.Args...).Start()
 	require.NoError(t, err)
 
-	procsBefore, err := process.FindProcesses(matcher, time.Second, time.Millisecond, testLog)
+	procsBefore, err := process.FindProcesses(matcher, time.Second, time.Millisecond)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(procsBefore))
 	pidBefore := procsBefore[0].Pid()
 	t.Logf("Pid before: %d", pidBefore)
 
 	// Start watching
-	err = Watch([]Program{procProgram}, 10*time.Millisecond, testLog)
+	err = Watch([]Program{procProgram}, 10*time.Millisecond)
 	require.NoError(t, err)
 
 	// Check again, and make sure it's a new process
-	procsAfter, err := process.FindProcesses(matcher, time.Second, time.Millisecond, testLog)
+	procsAfter, err := process.FindProcesses(matcher, time.Second, time.Millisecond)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(procsAfter))
 	pidAfter := procsAfter[0].Pid()
@@ -122,12 +119,12 @@ func TestTerminateBeforeWatchRace(t *testing.T) {
 
 	// block until we definitely have something to kill
 	<-blocker
-	err = Watch([]Program{mainProgram}, 10*time.Millisecond, testLog)
+	err = Watch([]Program{mainProgram}, 10*time.Millisecond)
 	require.NoError(t, err)
 
 	// Check and make sure there's only one of these processes running
-	matcher := process.NewMatcher(mainProgram.Path, process.PathEqual, testLog)
-	procsAfter, err := process.FindProcesses(matcher, time.Second, time.Millisecond, testLog)
+	matcher := process.NewMatcher(mainProgram.Path, process.PathEqual)
+	procsAfter, err := process.FindProcesses(matcher, time.Second, time.Millisecond)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(procsAfter))
 }
@@ -137,13 +134,13 @@ func TestExitOnSuccess(t *testing.T) {
 	procProgram.ExitOn = ExitOnSuccess
 	defer util.RemoveFileAtPath(procProgram.Path)
 
-	err := Watch([]Program{procProgram}, 0, testLog)
+	err := Watch([]Program{procProgram}, 0)
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
 
-	matcher := process.NewMatcher(procProgram.Path, process.PathEqual, testLog)
-	procsAfter, err := process.WaitForExit(matcher, 500*time.Millisecond, 50*time.Millisecond, testLog)
+	matcher := process.NewMatcher(procProgram.Path, process.PathEqual)
+	procsAfter, err := process.WaitForExit(matcher, 500*time.Millisecond, 50*time.Millisecond)
 	require.NoError(t, err)
 	assert.Equal(t, 0, len(procsAfter))
 }
@@ -159,7 +156,7 @@ func procTestPath(name string) (string, string) {
 // procProgram returns a testable unique program at a temporary location
 func procProgram(t *testing.T, name string, testCommand string) Program {
 	path, procPath := procTestPath(name)
-	err := util.CopyFile(path, procPath, testLog)
+	err := util.CopyFile(path, procPath)
 	require.NoError(t, err)
 	err = os.Chmod(procPath, 0777)
 	require.NoError(t, err)

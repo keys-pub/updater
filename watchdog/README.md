@@ -1,4 +1,4 @@
-## Watchdog
+# Watchdog
 
 The watchdog is in charge of ensuring that a list of programs are always running.
 The watchdog will start these programs (it will be the parent of those processes).

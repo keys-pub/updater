@@ -14,14 +14,6 @@ import (
 	"time"
 )
 
-// Log is the logging interface for the command package
-type Log interface {
-	Debugf(s string, args ...interface{})
-	Infof(s string, args ...interface{})
-	Warningf(s string, args ...interface{})
-	Errorf(s string, args ...interface{})
-}
-
 // Program is a program at path with arguments
 type Program struct {
 	Path string
@@ -61,21 +53,21 @@ func (r Result) CombinedOutput() string {
 type execCmd func(name string, arg ...string) *exec.Cmd
 
 // Exec runs a command and returns the stdout/err output and error if any
-func Exec(name string, args []string, timeout time.Duration, log Log) (Result, error) {
-	return execWithFunc(name, args, nil, exec.Command, timeout, log)
+func Exec(name string, args []string, timeout time.Duration) (Result, error) {
+	return execWithFunc(name, args, nil, exec.Command, timeout)
 }
 
 // ExecWithEnv runs a command with an environment and returns the stdout/err output and error if any
-func ExecWithEnv(name string, args []string, env []string, timeout time.Duration, log Log) (Result, error) {
-	return execWithFunc(name, args, env, exec.Command, timeout, log)
+func ExecWithEnv(name string, args []string, env []string, timeout time.Duration) (Result, error) {
+	return execWithFunc(name, args, env, exec.Command, timeout)
 }
 
 // exec runs a command and returns a Result and error if any.
 // We will send TERM signal and wait 1 second or timeout, whichever is less,
 // before calling KILL.
-func execWithFunc(name string, args []string, env []string, execCmd execCmd, timeout time.Duration, log Log) (Result, error) {
+func execWithFunc(name string, args []string, env []string, execCmd execCmd, timeout time.Duration) (Result, error) {
 	var result Result
-	log.Debugf("Execute: %s %s", name, args)
+	logger.Debugf("Execute: %s %s", name, args)
 	if name == "" {
 		return result, fmt.Errorf("No command")
 	}
@@ -104,11 +96,11 @@ func execWithFunc(name string, args []string, env []string, execCmd execCmd, tim
 	// Wait for the command to finish or time out
 	select {
 	case cmdErr := <-doneCh:
-		log.Debugf("Executed %s %s", name, args)
+		logger.Debugf("Executed %s %s", name, args)
 		return result, cmdErr
 	case <-time.After(timeout):
 		// Timed out
-		log.Warningf("Process timed out")
+		logger.Warningf("Process timed out")
 	}
 	// If no process, nothing to kill
 	if cmd.Process == nil {
@@ -121,29 +113,29 @@ func execWithFunc(name string, args []string, env []string, execCmd execCmd, tim
 	if timeout < termWait {
 		termWait = timeout
 	}
-	log.Warningf("Command timed out, terminating (will wait %s before killing)", termWait)
+	logger.Warningf("Command timed out, terminating (will wait %s before killing)", termWait)
 	err = cmd.Process.Signal(syscall.SIGTERM)
 	if err != nil {
-		log.Warningf("Error sending terminate: %s", err)
+		logger.Warningf("Error sending terminate: %s", err)
 	}
 	select {
 	case <-doneCh:
-		log.Warningf("Terminated")
+		logger.Warningf("Terminated")
 	case <-time.After(termWait):
 		// Bring out the big guns
-		log.Warningf("Command failed to terminate, killing")
+		logger.Warningf("Command failed to terminate, killing")
 		if err := cmd.Process.Kill(); err != nil {
-			log.Warningf("Error trying to kill process: %s", err)
+			logger.Warningf("Error trying to kill process: %s", err)
 		} else {
-			log.Warningf("Killed process")
+			logger.Warningf("Killed process")
 		}
 	}
 	return result, fmt.Errorf("Timed out")
 }
 
 // ExecForJSON runs a command (with timeout) expecting JSON output with obj interface
-func ExecForJSON(command string, args []string, obj interface{}, timeout time.Duration, log Log) error {
-	result, err := execWithFunc(command, args, nil, exec.Command, timeout, log)
+func ExecForJSON(command string, args []string, obj interface{}, timeout time.Duration) error {
+	result, err := execWithFunc(command, args, nil, exec.Command, timeout)
 	if err != nil {
 		return err
 	}

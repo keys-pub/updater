@@ -14,14 +14,14 @@ import (
 )
 
 func TestExecWithEnv(t *testing.T) {
-	result, err := execWithFunc("printenv", []string{"TESTENV"}, []string{"TESTENV=ok"}, exec.Command, time.Second, testLog)
+	result, err := execWithFunc("printenv", []string{"TESTENV"}, []string{"TESTENV=ok"}, exec.Command, time.Second)
 	assert.NoError(t, err)
 	assert.Equal(t, result.Stdout.String(), "ok\n")
 }
 
 func TestExecWithNoEnv(t *testing.T) {
 	// Check there is a PATH env var if we pass nil
-	result, err := execWithFunc("printenv", []string{"PATH"}, nil, exec.Command, time.Second, testLog)
+	result, err := execWithFunc("printenv", []string{"PATH"}, nil, exec.Command, time.Second)
 	assert.NoError(t, err)
 	assert.NotEqual(t, result.Stdout.String(), "")
 }

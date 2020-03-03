@@ -13,22 +13,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keybase/go-logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var testLog = &logging.Logger{Module: "test"}
-
 func TestExecEmpty(t *testing.T) {
-	result, err := Exec("", nil, time.Second, testLog)
+	result, err := Exec("", nil, time.Second)
 	assert.EqualError(t, err, "No command")
 	assert.Equal(t, result.Stdout.String(), "")
 	assert.Equal(t, result.Stderr.String(), "")
 }
 
 func TestExecInvalid(t *testing.T) {
-	result, err := Exec("invalidexecutable", nil, time.Second, testLog)
+	result, err := Exec("invalidexecutable", nil, time.Second)
 	assert.Error(t, err)
 	require.True(t, strings.HasPrefix(err.Error(), `exec: "invalidexecutable": executable file not found in `))
 	assert.Equal(t, result.Stdout.String(), "")
@@ -39,7 +36,7 @@ func TestExecEcho(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Unsupported on windows")
 	}
-	result, err := Exec("echo", []string{"arg1", "arg2"}, time.Second, testLog)
+	result, err := Exec("echo", []string{"arg1", "arg2"}, time.Second)
 	assert.NoError(t, err)
 	assert.Equal(t, result.Stdout.String(), "arg1 arg2\n")
 }
@@ -48,14 +45,14 @@ func TestExecNil(t *testing.T) {
 	execCmd := func(name string, arg ...string) *exec.Cmd {
 		return nil
 	}
-	_, err := execWithFunc("echo", []string{"arg1", "arg2"}, nil, execCmd, time.Second, testLog)
+	_, err := execWithFunc("echo", []string{"arg1", "arg2"}, nil, execCmd, time.Second)
 	require.Error(t, err)
 }
 
 func TestExecTimeout(t *testing.T) {
 	start := time.Now()
 	timeout := 10 * time.Millisecond
-	result, err := Exec("sleep", []string{"10"}, timeout, testLog)
+	result, err := Exec("sleep", []string{"10"}, timeout)
 	elapsed := time.Since(start)
 	t.Logf("We elapsed %s", elapsed)
 	if elapsed < timeout {
@@ -67,7 +64,7 @@ func TestExecTimeout(t *testing.T) {
 }
 
 func TestExecBadTimeout(t *testing.T) {
-	result, err := Exec("sleep", []string{"1"}, -time.Second, testLog)
+	result, err := Exec("sleep", []string{"1"}, -time.Second)
 	assert.Equal(t, result.Stdout.String(), "")
 	assert.Equal(t, result.Stderr.String(), "")
 	assert.EqualError(t, err, "Invalid timeout: -1s")
@@ -104,7 +101,7 @@ var testVal = testObj{
 
 func TestExecForJSON(t *testing.T) {
 	var testValOut testObj
-	err := ExecForJSON("echo", []string{testJSON}, &testValOut, time.Second, testLog)
+	err := ExecForJSON("echo", []string{testJSON}, &testValOut, time.Second)
 	assert.NoError(t, err)
 	t.Logf("Out: %#v", testValOut)
 	if !reflect.DeepEqual(testVal, testValOut) {
@@ -113,7 +110,7 @@ func TestExecForJSON(t *testing.T) {
 }
 
 func TestExecForJSONEmpty(t *testing.T) {
-	err := ExecForJSON("", nil, nil, time.Second, testLog)
+	err := ExecForJSON("", nil, nil, time.Second)
 	require.Error(t, err)
 }
 
@@ -121,7 +118,7 @@ func TestExecForJSONInvalidObject(t *testing.T) {
 	// Valid JSON, but not the right object
 	validJSON := `{"stringVar": true}`
 	var testValOut testObj
-	err := ExecForJSON("echo", []string{validJSON}, &testValOut, time.Second, testLog)
+	err := ExecForJSON("echo", []string{validJSON}, &testValOut, time.Second)
 	require.Error(t, err)
 	t.Logf("Error: %s", err)
 }
@@ -130,7 +127,7 @@ func TestExecForJSONInvalidObject(t *testing.T) {
 // We still succeed in this case since we got valid input to start.
 func TestExecForJSONAddingInvalidInput(t *testing.T) {
 	var testValOut testObj
-	err := ExecForJSON("echo", []string{testJSON + "bad input"}, &testValOut, time.Second, testLog)
+	err := ExecForJSON("echo", []string{testJSON + "bad input"}, &testValOut, time.Second)
 	assert.NoError(t, err)
 	t.Logf("Out: %#v", testValOut)
 	if !reflect.DeepEqual(testVal, testValOut) {
@@ -140,7 +137,7 @@ func TestExecForJSONAddingInvalidInput(t *testing.T) {
 
 func TestExecForJSONTimeout(t *testing.T) {
 	var testValOut testObj
-	err := ExecForJSON("sleep", []string{"10"}, &testValOut, 10*time.Millisecond, testLog)
+	err := ExecForJSON("sleep", []string{"10"}, &testValOut, 10*time.Millisecond)
 	if assert.Error(t, err) {
 		assert.Equal(t, err.Error(), "Timed out")
 	}
@@ -151,7 +148,7 @@ func TestExecTimeoutProcessKilled(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Unsupported on windows")
 	}
-	result, err := execWithFunc("sleep", []string{"10"}, nil, exec.Command, 10*time.Millisecond, testLog)
+	result, err := execWithFunc("sleep", []string{"10"}, nil, exec.Command, 10*time.Millisecond)
 	assert.Equal(t, result.Stdout.String(), "")
 	assert.Equal(t, result.Stderr.String(), "")
 	assert.Error(t, err)
@@ -166,13 +163,13 @@ func TestExecTimeoutProcessKilled(t *testing.T) {
 // that should be installed prior to running the tests.
 func TestExecNoExit(t *testing.T) {
 	path := filepath.Join(os.Getenv("GOPATH"), "bin", "test")
-	_, err := Exec(path, []string{"noexit"}, 10*time.Millisecond, testLog)
+	_, err := Exec(path, []string{"noexit"}, 10*time.Millisecond)
 	require.EqualError(t, err, "Timed out")
 }
 
 func TestExecOutput(t *testing.T) {
 	path := filepath.Join(os.Getenv("GOPATH"), "bin", "test")
-	result, err := execWithFunc(path, []string{"output"}, nil, exec.Command, time.Second, testLog)
+	result, err := execWithFunc(path, []string{"output"}, nil, exec.Command, time.Second)
 	assert.NoError(t, err)
 	assert.Equal(t, "stdout output\n", result.Stdout.String())
 	assert.Equal(t, "stderr output\n", result.Stderr.String())

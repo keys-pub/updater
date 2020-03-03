@@ -15,7 +15,7 @@ const (
 	CancelError ErrorType = "cancel"
 	// ConfigError is for errors reading/saving config
 	ConfigError ErrorType = "config"
-	// ConfigError is for when the GUI is active
+	// GUIBusyError is for when the GUI is active
 	GUIBusyError ErrorType = "guiBusy"
 )
 

@@ -15,8 +15,6 @@ const (
 	CancelError ErrorType = "cancel"
 	// ConfigError is for errors reading/saving config
 	ConfigError ErrorType = "config"
-	// GUIBusyError is for when the GUI is active
-	GUIBusyError ErrorType = "guiBusy"
 )
 
 // Errors corresponding to each stage in the update process
@@ -58,11 +56,6 @@ func (e Error) IsCancel() bool {
 	return e.errorType == CancelError
 }
 
-// IsGUIBusy returns true if the UI was active
-func (e Error) IsGUIBusy() bool {
-	return e.errorType == GUIBusyError
-}
-
 // Error returns description for an UpdateError
 func (e Error) Error() string {
 	if e.source == nil {
@@ -74,10 +67,6 @@ func (e Error) Error() string {
 // CancelErr can be returned by lifecycle methods to abort an update
 func CancelErr(err error) Error {
 	return NewError(CancelError, err)
-}
-
-func guiBusyErr(err error) Error {
-	return NewError(GUIBusyError, err)
 }
 
 func promptErr(err error) Error {

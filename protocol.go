@@ -5,24 +5,31 @@ package updater
 
 // Asset describes a downloadable file
 type Asset struct {
-	Name      string `json:"name"`
-	URL       string `json:"url"`
-	Digest    string `json:"digest"`
-	Signature string `json:"signature"`
+	// Name of file.
+	Name string `json:"name"`
+	// URL to request from.
+	URL string `json:"url"`
+	// Digest is hex encoded digest.
+	Digest string `json:"digest"`
+	// DigestType is sha256 by default. Also supports "sha512".
+	DigestType string `json:"digestType"`
+	// Signature is saltpack signature.
+	Signature string `json:"signature,omitempty"`
+	// LocalPath is where downloaded file resides.
 	LocalPath string `json:"localPath"`
 }
 
 // UpdateType is the update type.
 // This is an int type for compatibility.
-type UpdateType int
+type UpdateType string
 
 const (
 	// UpdateTypeNormal is a normal update
-	UpdateTypeNormal UpdateType = 0
+	UpdateTypeNormal UpdateType = ""
 	// UpdateTypeBugFix is a bugfix update
-	UpdateTypeBugFix UpdateType = 1
+	UpdateTypeBugFix UpdateType = "bug-fix"
 	// UpdateTypeCritical is a critical update
-	UpdateTypeCritical UpdateType = 2
+	UpdateTypeCritical UpdateType = "critical"
 )
 
 // Property is a generic key value pair for custom properties
@@ -34,11 +41,11 @@ type Property struct {
 // Update defines an update to apply
 type Update struct {
 	Version     string     `json:"version"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	InstallID   string     `json:"installId"`
-	RequestID   string     `json:"requestId"`
-	Type        UpdateType `json:"type"`
+	Name        string     `json:"name,omitempty"`
+	Description string     `json:"description,omitempty"`
+	InstallID   string     `json:"installId,omitempty"`
+	RequestID   string     `json:"requestId,omitempty"`
+	Type        UpdateType `json:"type,omitempty"`
 	PublishedAt int64      `json:"publishedAt"`
 	Props       []Property `codec:"props" json:"props,omitempty"`
 	Asset       *Asset     `json:"asset,omitempty"`
@@ -49,6 +56,8 @@ type Update struct {
 type UpdateOptions struct {
 	// Version is the current version of the app
 	Version string `json:"version"`
+	// AppName is name of the app
+	AppName string `json:"appName"`
 	// Platform is the os type (darwin, windows, linux)
 	Platform string `json:"platform"`
 	// DestinationPath is where to apply the update to
@@ -113,5 +122,5 @@ type UpdatePromptResponse struct {
 // UpdateUI is a UI interface
 type UpdateUI interface {
 	// UpdatePrompt prompts for an update
-	UpdatePrompt(Update, UpdateOptions, UpdatePromptOptions) (*UpdatePromptResponse, error)
+	UpdatePrompt(*Update, UpdateOptions, UpdatePromptOptions) (*UpdatePromptResponse, error)
 }

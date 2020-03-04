@@ -41,23 +41,23 @@ type testUpdateCheckUI struct {
 	verifyError error
 }
 
-func (u testUpdateCheckUI) BeforeUpdatePrompt(_ Update, _ UpdateOptions) error {
+func (u testUpdateCheckUI) BeforeUpdatePrompt(_ *Update, _ UpdateOptions) error {
 	return nil
 }
 
-func (u testUpdateCheckUI) UpdatePrompt(_ Update, _ UpdateOptions, _ UpdatePromptOptions) (*UpdatePromptResponse, error) {
+func (u testUpdateCheckUI) UpdatePrompt(_ *Update, _ UpdateOptions, _ UpdatePromptOptions) (*UpdatePromptResponse, error) {
 	return &UpdatePromptResponse{Action: UpdateActionApply}, nil
 }
 
-func (u testUpdateCheckUI) BeforeApply(update Update) error {
+func (u testUpdateCheckUI) BeforeApply(update *Update) error {
 	return nil
 }
 
-func (u testUpdateCheckUI) Apply(update Update, options UpdateOptions, tmpDir string) error {
+func (u testUpdateCheckUI) Apply(update *Update, options UpdateOptions, tmpDir string) error {
 	return nil
 }
 
-func (u testUpdateCheckUI) AfterApply(update Update) error {
+func (u testUpdateCheckUI) AfterApply(update *Update) error {
 	return nil
 }
 
@@ -65,7 +65,7 @@ func (u testUpdateCheckUI) GetUpdateUI() UpdateUI {
 	return u
 }
 
-func (u testUpdateCheckUI) Verify(update Update) error {
+func (u testUpdateCheckUI) Verify(update *Update) error {
 	return u.verifyError
 }
 

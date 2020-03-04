@@ -54,26 +54,26 @@ type testUpdateUI struct {
 	isCheckCommand     bool
 }
 
-func (u testUpdateUI) BeforeUpdatePrompt(_ Update, _ UpdateOptions) error {
+func (u testUpdateUI) BeforeUpdatePrompt(_ *Update, _ UpdateOptions) error {
 	return nil
 }
 
-func (u testUpdateUI) UpdatePrompt(_ Update, _ UpdateOptions, _ UpdatePromptOptions) (*UpdatePromptResponse, error) {
+func (u testUpdateUI) UpdatePrompt(_ *Update, _ UpdateOptions, _ UpdatePromptOptions) (*UpdatePromptResponse, error) {
 	if u.promptErr != nil {
 		return nil, u.promptErr
 	}
 	return u.response, nil
 }
 
-func (u testUpdateUI) BeforeApply(update Update) error {
+func (u testUpdateUI) BeforeApply(update *Update) error {
 	return u.beforeApplyErr
 }
 
-func (u testUpdateUI) Apply(update Update, options UpdateOptions, tmpDir string) error {
+func (u testUpdateUI) Apply(update *Update, options UpdateOptions, tmpDir string) error {
 	return nil
 }
 
-func (u testUpdateUI) AfterApply(update Update) error {
+func (u testUpdateUI) AfterApply(update *Update) error {
 	return u.afterApplyErr
 }
 
@@ -81,7 +81,7 @@ func (u testUpdateUI) GetUpdateUI() UpdateUI {
 	return u
 }
 
-func (u testUpdateUI) Verify(update Update) error {
+func (u testUpdateUI) Verify(update *Update) error {
 	if u.verifyErr != nil {
 		return u.verifyErr
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -119,12 +120,13 @@ func URLExists(urlString string, timeout time.Duration) (bool, error) {
 	return true, nil
 }
 
-// DownloadURLOptions are options for DownloadURL
+// DownloadURLOptions are options for DownloadURL.
 type DownloadURLOptions struct {
-	Digest        string
-	RequireDigest bool
-	UseETag       bool
-	Timeout       time.Duration
+	Digest     string
+	SkipDigest bool
+	DigestType DigestType
+	UseETag    bool
+	Timeout    time.Duration
 }
 
 // DownloadURL downloads a URL to a path.
@@ -184,6 +186,16 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 		cached = true
 		// ETag matched, we already have it
 		logger.Infof("Using cached file: %s", destinationPath)
+
+		if !options.SkipDigest {
+			if err := CheckDigest(options.Digest, destinationPath, options.DigestType); err != nil {
+				if rerr := os.Remove(destinationPath); rerr != nil {
+					return cached, fmt.Errorf("Error removing existing download: %s", rerr)
+				}
+				return cached, err
+			}
+		}
+
 		return cached, nil
 	}
 	if resp.StatusCode != http.StatusOK {
@@ -206,8 +218,8 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 		return cached, err
 	}
 
-	if options.RequireDigest {
-		if err := CheckDigest(options.Digest, savePath); err != nil {
+	if !options.SkipDigest {
+		if err := CheckDigest(options.Digest, savePath, options.DigestType); err != nil {
 			return cached, err
 		}
 	}
@@ -224,8 +236,8 @@ func downloadLocal(localPath string, destinationPath string, options DownloadURL
 		return err
 	}
 
-	if options.RequireDigest {
-		if err := CheckDigest(options.Digest, destinationPath); err != nil {
+	if !options.SkipDigest {
+		if err := CheckDigest(options.Digest, destinationPath, options.DigestType); err != nil {
 			return err
 		}
 	}
@@ -238,4 +250,21 @@ func URLValueForBool(b bool) string {
 		return "1"
 	}
 	return "0"
+}
+
+// HTTPClient returns http.Client with timeout.
+func HTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: timeout,
+			}).Dial,
+			TLSHandshakeTimeout: timeout,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			logger.Infof("Redirect %s", req.URL)
+			return nil
+		},
+	}
 }

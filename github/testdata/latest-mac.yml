@@ -1,0 +1,12 @@
+version: 0.0.18
+files:
+  - url: Keys-0.0.18-mac.zip
+    sha512: n+RiYDrL2E5V5d+moC9A0Eg1UciL0FO0s4J6umfX/j5TQUoiFPY4egLgv8Zn1GTtDMSU8UtsoErlyoGiDVA2GA==
+    size: 87933949
+    blockMapSize: 93069
+  - url: Keys-0.0.18.dmg
+    sha512: jbNIRoeG9KKvq7EdRrf5fvpU3Qiw383bWdhKJZJkn4qtEvTGnuZUdRtResgWu8NBiWPSvuSqv6fcUwz7Mag9Tw==
+    size: 90785677
+path: Keys-0.0.18-mac.zip
+sha512: n+RiYDrL2E5V5d+moC9A0Eg1UciL0FO0s4J6umfX/j5TQUoiFPY4egLgv8Zn1GTtDMSU8UtsoErlyoGiDVA2GA==
+releaseDate: "2020-03-03T22:44:03.689Z"

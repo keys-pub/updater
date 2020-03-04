@@ -143,9 +143,9 @@ func TestDownloadURLValid(t *testing.T) {
 	server := testServer(t, "ok", 0)
 	defer server.Close()
 	destinationPath := TempPath("", "TestDownloadURLValid.")
-	digest, err := Digest(bytes.NewReader([]byte("ok\n")))
+	digest, err := Digest256(bytes.NewReader([]byte("ok\n")))
 	assert.NoError(t, err)
-	err = DownloadURL(server.URL, destinationPath, DownloadURLOptions{Digest: digest, RequireDigest: true})
+	err = DownloadURL(server.URL, destinationPath, DownloadURLOptions{Digest: digest})
 	if assert.NoError(t, err) {
 		// Check file saved and correct data
 		fileExists, fileErr := FileExists(destinationPath)
@@ -159,9 +159,9 @@ func TestDownloadURLValid(t *testing.T) {
 	// Repeat test, download again, overwriting destination
 	server2 := testServer(t, "ok2", 0)
 	defer server2.Close()
-	digest2, err := Digest(bytes.NewReader([]byte("ok2\n")))
+	digest2, err := Digest256(bytes.NewReader([]byte("ok2\n")))
 	assert.NoError(t, err)
-	err = DownloadURL(server2.URL, destinationPath, DownloadURLOptions{Digest: digest2, RequireDigest: true})
+	err = DownloadURL(server2.URL, destinationPath, DownloadURLOptions{Digest: digest2})
 	if assert.NoError(t, err) {
 		fileExists2, err := FileExists(destinationPath)
 		assert.NoError(t, err)
@@ -232,9 +232,9 @@ func TestDownloadURLETag(t *testing.T) {
 	destinationPath := TempPath("", "TestDownloadURLETag.")
 	err := ioutil.WriteFile(destinationPath, data, 0600)
 	require.NoError(t, err)
-	digest, err := Digest(bytes.NewReader(data))
+	digest, err := Digest256(bytes.NewReader(data))
 	assert.NoError(t, err)
-	cached, err := downloadURL(server.URL, destinationPath, DownloadURLOptions{Digest: digest, RequireDigest: true, UseETag: true})
+	cached, err := downloadURL(server.URL, destinationPath, DownloadURLOptions{Digest: digest, UseETag: true})
 	require.NoError(t, err)
 	assert.True(t, cached)
 }

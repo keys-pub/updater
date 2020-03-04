@@ -4,26 +4,23 @@
 package updater
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/keys-pub/updater/util"
+	"github.com/pkg/errors"
 )
 
 // Version is the updater version
-const Version = "0.3.5"
+const Version = "0.4.1"
 
 // Updater knows how to find and apply updates
 type Updater struct {
 	source       UpdateSource
 	config       Config
-	guiBusyCount int
 	tickDuration time.Duration
 }
 
@@ -40,18 +37,15 @@ type UpdateSource interface {
 type Context interface {
 	GetUpdateUI() UpdateUI
 	UpdateOptions() UpdateOptions
-	Verify(update Update) error
-	BeforeUpdatePrompt(update Update, options UpdateOptions) error
-	BeforeApply(update Update) error
-	Apply(update Update, options UpdateOptions, tmpDir string) error
-	AfterApply(update Update) error
+	Verify(update *Update) error
+	BeforeUpdatePrompt(update *Update, options UpdateOptions) error
+	BeforeApply(update *Update) error
+	Apply(update *Update, options UpdateOptions, tmpDir string) error
+	AfterApply(update *Update) error
 	ReportError(err error, update *Update, options UpdateOptions)
 	ReportAction(updatePromptResponse UpdatePromptResponse, update *Update, options UpdateOptions)
 	ReportSuccess(update *Update, options UpdateOptions)
 	AfterUpdateCheck(update *Update)
-	GetAppStatePath() string
-	IsCheckCommand() bool
-	DeepClean()
 }
 
 // Config defines configuration for the Updater
@@ -90,6 +84,33 @@ func (u *Updater) Update(ctx Context) (*Update, error) {
 	return update, err
 }
 
+// Download an update.
+// If downloaded update.Asset.LocalPath is set to downloaded path.
+func (u *Updater) Download(ctx Context, update *Update, options UpdateOptions) error {
+	// Linux updates don't have assets so it's ok to prompt for update above before
+	// we check for nil asset.
+	if update.Asset == nil || update.Asset.URL == "" {
+		logger.Infof("No update asset to apply")
+		return nil
+	}
+
+	tmpDir := tempDir(options.AppName)
+	if err := u.downloadAsset(update.Asset, tmpDir, options); err != nil {
+		return downloadErr(err)
+	}
+
+	logger.Infof("Verify asset: %s", update.Asset.LocalPath)
+	if err := ctx.Verify(update); err != nil {
+		return verifyErr(err)
+	}
+
+	return nil
+}
+
+func tempDir(appName string) string {
+	return filepath.Join(os.TempDir(), "updater", appName)
+}
+
 // update returns the update received, and an error if the update was not
 // performed. The error with be of type Error. The error may be due to the user
 // (or system) canceling an update, in which case error.IsCancel() will be true.
@@ -104,13 +125,13 @@ func (u *Updater) update(ctx Context, options UpdateOptions) (*Update, error) {
 	}
 	logger.Infof("Got update with version: %s", update.Version)
 
-	err = ctx.BeforeUpdatePrompt(*update, options)
+	err = ctx.BeforeUpdatePrompt(update, options)
 	if err != nil {
 		return update, err
 	}
 
 	// Prompt for update
-	updatePromptResponse, err := u.promptForUpdateAction(ctx, *update, options)
+	updatePromptResponse, err := u.promptForUpdateAction(ctx, update, options)
 	if err != nil {
 		return update, promptErr(err)
 	}
@@ -129,9 +150,6 @@ func (u *Updater) update(ctx Context, options UpdateOptions) (*Update, error) {
 		return update, promptErr(fmt.Errorf("Unknown prompt error"))
 	case UpdateActionContinue:
 		// Continue
-	case UpdateActionUIBusy:
-		// Return nil so that AfterUpdateCheck won't exit the service
-		return nil, guiBusyErr(fmt.Errorf("User active, retrying later"))
 	}
 
 	// Linux updates don't have assets so it's ok to prompt for update above before
@@ -141,39 +159,24 @@ func (u *Updater) update(ctx Context, options UpdateOptions) (*Update, error) {
 		return update, nil
 	}
 
-	if err := u.CleanupPreviousUpdates(); err != nil {
-		logger.Infof("Error cleaning up previous downloads: %v", err)
-	}
-
-	tmpDir := u.tempDir()
-	defer u.Cleanup(tmpDir)
+	tmpDir := tempDir(options.AppName)
 	if err := u.downloadAsset(update.Asset, tmpDir, options); err != nil {
 		return update, downloadErr(err)
 	}
 
 	logger.Infof("Verify asset: %s", update.Asset.LocalPath)
-	if err := ctx.Verify(*update); err != nil {
+	if err := ctx.Verify(update); err != nil {
 		return update, verifyErr(err)
 	}
 
-	// If we are auto-updating, do a final check if the user is active before
-	// killing the app. Note this can cause some churn with re-downloading the
-	// update on the next attempt.
-	if updatePromptResponse.Action == UpdateActionAuto && !ctx.IsCheckCommand() {
-		isActive, err := u.checkUserActive(ctx)
-		if err == nil && isActive {
-			return nil, guiBusyErr(fmt.Errorf("User active, retrying later"))
-		}
-	}
-
-	if err := u.apply(ctx, *update, options, tmpDir); err != nil {
+	if err := u.apply(ctx, update, options, tmpDir); err != nil {
 		return update, err
 	}
 
 	return update, nil
 }
 
-func (u *Updater) apply(ctx Context, update Update, options UpdateOptions, tmpDir string) error {
+func (u *Updater) apply(ctx Context, update *Update, options UpdateOptions, tmpDir string) error {
 	logger.Infof("Before apply")
 	if err := ctx.BeforeApply(update); err != nil {
 		return applyErr(err)
@@ -199,10 +202,21 @@ func (u *Updater) downloadAsset(asset *Asset, tmpDir string, options UpdateOptio
 	if asset == nil {
 		return fmt.Errorf("No asset to download")
 	}
+
+	var digestType util.DigestType
+	switch asset.DigestType {
+	case "", "sha256":
+		digestType = util.SHA256
+	case "sha512":
+		digestType = util.SHA512
+	default:
+		return errors.Errorf("Unsupported digest type: %s", asset.DigestType)
+	}
+
 	downloadOptions := util.DownloadURLOptions{
-		Digest:        asset.Digest,
-		RequireDigest: true,
-		UseETag:       true,
+		Digest:     asset.Digest,
+		DigestType: digestType,
+		UseETag:    true,
 	}
 
 	downloadPath := filepath.Join(tmpDir, asset.Name)
@@ -242,31 +256,19 @@ func (u *Updater) checkForUpdate(ctx Context, options UpdateOptions) (*Update, e
 	return update, nil
 }
 
-// NeedUpdate returns true if we are out-of-date.
-func (u *Updater) NeedUpdate(ctx Context) (upToDate bool, err error) {
-	update, err := u.checkForUpdate(ctx, ctx.UpdateOptions())
-	if err != nil {
-		return false, err
-	}
-	return update.NeedUpdate, nil
+// CheckForUpdate returns update.
+func (u *Updater) CheckForUpdate(ctx Context) (*Update, error) {
+	return u.checkForUpdate(ctx, ctx.UpdateOptions())
 }
 
 // promptForUpdateAction prompts the user for permission to apply an update
-func (u *Updater) promptForUpdateAction(ctx Context, update Update, options UpdateOptions) (UpdatePromptResponse, error) {
+func (u *Updater) promptForUpdateAction(ctx Context, update *Update, options UpdateOptions) (UpdatePromptResponse, error) {
 	logger.Debugf("Prompt for update")
 
 	auto, autoSet := u.config.GetUpdateAuto()
 	autoOverride := u.config.GetUpdateAutoOverride()
 	logger.Debugf("Auto update: %s (set=%s autoOverride=%s)", strconv.FormatBool(auto), strconv.FormatBool(autoSet), strconv.FormatBool(autoOverride))
 	if auto && !autoOverride {
-		if !ctx.IsCheckCommand() {
-			// If there's an error getting active status, we'll just update
-			isActive, err := u.checkUserActive(ctx)
-			if err == nil && isActive {
-				return UpdatePromptResponse{UpdateActionUIBusy, false, 0}, nil
-			}
-			u.guiBusyCount = 0
-		}
 		return UpdatePromptResponse{UpdateActionAuto, false, 0}, nil
 	}
 
@@ -287,52 +289,18 @@ func (u *Updater) promptForUpdateAction(ctx Context, update Update, options Upda
 		logger.Debugf("Update prompt response: %#v", updatePromptResponse)
 		if err := u.config.SetUpdateAuto(updatePromptResponse.AutoUpdate); err != nil {
 			logger.Warningf("Error setting auto preference: %s", err)
-			ctx.ReportError(configErr(fmt.Errorf("Error setting auto preference: %s", err)), &update, options)
+			ctx.ReportError(configErr(fmt.Errorf("Error setting auto preference: %s", err)), update, options)
 		}
 	}
 
 	return *updatePromptResponse, nil
 }
 
-type guiAppState struct {
-	IsUserActive bool  `json:"isUserActive"`
-	ChangedAtMs  int64 `json:"changedAtMs"`
-}
-
-func (u *Updater) checkUserActive(ctx Context) (bool, error) {
-	if time.Duration(u.guiBusyCount)*u.tickDuration >= time.Hour*6 { // Allow the update through after 6 hours
-		logger.Warningf("Waited for GUI %d times - ignoring busy", u.guiBusyCount)
-		return false, nil
-	}
-
-	// Read app-state.json, written by the GUI
-	rawState, err := util.ReadFile(ctx.GetAppStatePath())
-	if err != nil {
-		logger.Warningf("Error reading GUI state - proceeding", err)
-		return false, err
-	}
-
-	guistate := guiAppState{}
-	if err = json.Unmarshal(rawState, &guistate); err != nil {
-		logger.Warningf("Error parsing GUI state - proceeding", err)
-		return false, err
-	}
-	// check if the user is currently active or was active in the last 5
-	// minutes.
-	isActive := guistate.IsUserActive || time.Since(time.Unix(guistate.ChangedAtMs/1000, 0)) <= time.Minute*5
-	if isActive {
-		u.guiBusyCount++
-		logger.Infof("GUI busy on attempt %d", u.guiBusyCount)
-	}
-
-	return isActive, nil
-}
-
 func report(ctx Context, err error, update *Update, options UpdateOptions) {
 	if err != nil {
 		// Don't report cancels or GUI busy
 		if e, ok := err.(Error); ok {
-			if e.IsCancel() || e.IsGUIBusy() {
+			if e.IsCancel() {
 				return
 			}
 		}
@@ -342,49 +310,9 @@ func report(ctx Context, err error, update *Update, options UpdateOptions) {
 	}
 }
 
-// tempDir, if specified, will contain files that were replaced during an update
-// and will be removed after an update. The temp dir should already exist.
-func (u *Updater) tempDir() string {
-	tmpDir := util.TempPath("", "KeybaseUpdater.")
-	if err := util.MakeDirs(tmpDir, 0700); err != nil {
-		logger.Warningf("Error trying to create temp dir: %s", err)
-		return ""
-	}
-	return tmpDir
-}
-
-var tempDirRE = regexp.MustCompile(`^KeybaseUpdater.([ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]{52}|\d{18,})$`)
-
-// CleanupPreviousUpdates removes temporary files from previous updates.
-func (u *Updater) CleanupPreviousUpdates() (err error) {
-	parent := os.TempDir()
-	if parent == "" || parent == "." {
-		return fmt.Errorf("temp directory is '%v'", parent)
-	}
-	files, err := ioutil.ReadDir(parent)
-	if err != nil {
-		return fmt.Errorf("listing parent directory: %v", err)
-	}
-	for _, fi := range files {
-		if !fi.IsDir() {
-			continue
-		}
-		if tempDirRE.MatchString(fi.Name()) {
-			targetPath := filepath.Join(parent, fi.Name())
-			logger.Debugf("Cleaning old download: %v", targetPath)
-			err = os.RemoveAll(targetPath)
-			if err != nil {
-				logger.Infof("Error deleting old temp dir %v: %v", fi.Name(), err)
-			}
-		}
-	}
-	return nil
-}
-
-// Cleanup removes temporary files from this update
-func (u *Updater) Cleanup(tmpDir string) {
+func remove(tmpDir string) {
 	if tmpDir != "" {
-		logger.Debugf("Remove temporary directory: %q", tmpDir)
+		logger.Infof("Clearing temporary directory: %q", tmpDir)
 		if err := os.RemoveAll(tmpDir); err != nil {
 			logger.Warningf("Error removing temporary directory %q: %s", tmpDir, err)
 		}

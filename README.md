@@ -11,7 +11,6 @@ The goals of this library are to provide an updater that:
 - Has minimal dependencies
 - Is well tested
 - Is secure
-- Reports failures and activity
 - Can notify the user of any non-transient failures
 
 ## Packages

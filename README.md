@@ -1,28 +1,39 @@
 # Updater
 
-The goals of this library are to provide an updater that:
+## Check for Update
 
-- Is simple
-- Works on all our platforms (at least macOS, Windows, Linux)
-- Recovers from non-fatal errors
-- Every request or command execution should timeout (nothing blocks)
-- Can recover from failures in its environment
-- Can run as an unprivileged background service
-- Has minimal dependencies
-- Is well tested
-- Is secure
-- Can notify the user of any non-transient failures
+```shell
+updater -github keys-pub/app -app-name Keys -current 0.0.17
 
-## Packages
+{
+  "version": "0.0.18",
+  "publishedAt": 1583275443689,
+  "asset": {
+    "name": "Keys-0.0.18-mac.zip",
+    "url": "https://github.com/keys-pub/app/releases/latest/download/Keys-0.0.18-mac.zip",
+    "digest": "9fe462603acbd84e55e5dfa6a02f40d0483551c88bd053b4b3827aba67d7fe3e53414a2214f6387a02e0bfc667d464ed0cc494f14b6ca04ae5ca81a20d503618",
+    "digestType": "sha512",
+    "localPath": ""
+  },
+  "needUpdate": true
+}
+```
 
-The main package is the updater core, there are other support packages:
+## Download Update
 
-- command: Executes a command with a timeout
-- osx: MacOS specific UI
-- process: Utilities to find and terminate processes
-- saltpack: Verify updates with [Saltpack](https://saltpack.org/)
-- sources: Update sources for remote locations (like S3), or locally (for testing)
-- test: Test resources
-- util: Utilities for updating, such as digests, env, file, http, unzip, etc.
-- watchdog: Utility to monitor processes and restart them (like launchd), for use with updater service
-- windows: Windows specific UI
+```shell
+updater -github keys-pub/app -app-name Keys -current 0.0.17 -download
+
+{
+  "version": "0.0.18",
+  "publishedAt": 1583275443689,
+  "asset": {
+    "name": "Keys-0.0.18-mac.zip",
+    "url": "https://github.com/keys-pub/app/releases/latest/download/Keys-0.0.18-mac.zip",
+    "digest": "9fe462603acbd84e55e5dfa6a02f40d0483551c88bd053b4b3827aba67d7fe3e53414a2214f6387a02e0bfc667d464ed0cc494f14b6ca04ae5ca81a20d503618",
+    "digestType": "sha512",
+    "localPath": "/var/folders/84/7q50__3j4yscqtt4qmrv8rtr0000gn/T/updater/Keys/Keys-0.0.18-mac.zip"
+  },
+  "needUpdate": true
+}
+```

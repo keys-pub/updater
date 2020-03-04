@@ -103,9 +103,6 @@ func (s githubSource) updateFromGithub(b []byte, options updater.UpdateOptions) 
 }
 
 func (s githubSource) findUpdate(options updater.UpdateOptions, timeout time.Duration) (*updater.Update, error) {
-	if options.URL != "" {
-		return nil, fmt.Errorf("Custom URLs not supported for this update source")
-	}
 	if s.repo == "" {
 		return nil, errors.Errorf("No repo specified")
 	}

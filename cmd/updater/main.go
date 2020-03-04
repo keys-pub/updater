@@ -67,7 +67,10 @@ func run(f flags) error {
 		return errors.Errorf("No app name specified (-app-name)")
 	}
 
-	ctx := newContext(f.appName, f.current)
+	options := updater.UpdateOptions{
+		AppName: f.appName,
+		Version: f.current,
+	}
 
 	var src updater.UpdateSource
 	if f.github != "" {
@@ -76,13 +79,9 @@ func run(f flags) error {
 		return errors.Errorf("No update source")
 	}
 
-	cfg, err := newConfig(f.appName)
-	if err != nil {
-		return err
-	}
-	upd := updater.NewUpdater(src, cfg)
+	upd := updater.NewUpdater(src)
 
-	update, err := upd.CheckForUpdate(ctx)
+	update, err := upd.CheckForUpdate(options)
 	if err != nil {
 		return err
 	}
@@ -100,8 +99,7 @@ func run(f flags) error {
 	}
 
 	// Download
-	options := ctx.UpdateOptions()
-	if err := upd.Download(ctx, update, options); err != nil {
+	if err := upd.Download(update, options); err != nil {
 		return err
 	}
 	b, err := json.MarshalIndent(update, "", "  ")

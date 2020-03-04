@@ -199,7 +199,7 @@ func downloadURL(urlString string, destinationPath string, options DownloadURLOp
 		return cached, nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		return cached, fmt.Errorf("Responded with %s", resp.Status)
+		return cached, fmt.Errorf("%s", resp.Status)
 	}
 
 	savePath := fmt.Sprintf("%s.download", destinationPath)

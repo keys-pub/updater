@@ -204,7 +204,7 @@ func TestDownloadURLError(t *testing.T) {
 	defer server.Close()
 
 	err := DownloadURL(server.URL, "", DownloadURLOptions{})
-	assert.EqualError(t, err, "Responded with 500 Internal Server Error")
+	assert.EqualError(t, err, "500 Internal Server Error")
 }
 
 func TestDownloadURLLocal(t *testing.T) {
@@ -216,7 +216,7 @@ func TestDownloadURLLocal(t *testing.T) {
 
 	destinationPath := TempPath("", "TestDownloadURLLocal.")
 	defer RemoveFileAtPath(destinationPath)
-	err = DownloadURL(URLStringForPath(dest), destinationPath, DownloadURLOptions{})
+	err = DownloadURL(URLStringForPath(dest), destinationPath, DownloadURLOptions{SkipDigest: true})
 	assert.NoError(t, err)
 
 	exists, err := FileExists(destinationPath)

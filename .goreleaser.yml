@@ -2,7 +2,7 @@ project_name: "updater"
 builds:
   - id: updater
     binary: updater
-    main: ./cmd/updater/main.go
+    main: ./cmd/updater
     goos:
       - darwin
       - windows
@@ -14,7 +14,7 @@ builds:
       - goos: darwin
         goarch: 386
     hooks:
-      post: ./scripts/codesign.sh dist/keys_darwin_amd64/updater  
+      post: ./scripts/codesign.sh dist/updater_darwin_amd64/updater
 archives:
   - replacements:
       386: i386

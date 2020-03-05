@@ -37,3 +37,9 @@ updater -github keys-pub/app -app-name Keys -current 0.0.17 -download
   "needUpdate": true
 }
 ```
+
+## Apply Update
+
+```shell
+updater -github keys-pub/app -app-name Keys -current 0.0.17 -download -apply /Applications/Keys.app
+```

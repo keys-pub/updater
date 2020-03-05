@@ -232,6 +232,7 @@ func IsDirReal(path string) (bool, error) {
 // If the destination already exists and you specify a tmpDir, it will move
 // it there, otherwise it will be removed.
 func MoveFile(sourcePath string, destinationPath string, tmpDir string) error {
+	logger.Infof("Moving %s to %s", sourcePath, destinationPath)
 	if _, statErr := os.Stat(destinationPath); statErr == nil {
 		if tmpDir == "" {
 			logger.Infof("Removing existing destination path: %s", destinationPath)
@@ -251,7 +252,6 @@ func MoveFile(sourcePath string, destinationPath string, tmpDir string) error {
 		return err
 	}
 
-	logger.Infof("Moving %s to %s", sourcePath, destinationPath)
 	// Rename will copy over an existing destination
 	return os.Rename(sourcePath, destinationPath)
 }

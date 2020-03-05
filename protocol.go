@@ -23,13 +23,17 @@ type Property struct {
 	Value string `codec:"value" json:"value"`
 }
 
-// Update defines an update to apply
+// Update describes an update.
+// If update is needed, NeedUpdate will be true.
+// If update is downloaded, Asset.LocalPath will be set.
+// If update was applied, Applied is set to the destination.
 type Update struct {
 	Version     string     `json:"version"`
 	PublishedAt int64      `json:"publishedAt"`
 	Props       []Property `codec:"props" json:"props,omitempty"`
 	Asset       *Asset     `json:"asset,omitempty"`
 	NeedUpdate  bool       `json:"needUpdate"`
+	Applied     string     `json:"applied"`
 }
 
 // UpdateOptions are options used to find an update

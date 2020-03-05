@@ -1,3 +1,0 @@
-# Updater
-
-Run the updater.

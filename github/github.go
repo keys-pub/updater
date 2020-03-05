@@ -49,7 +49,7 @@ func newGithubSource(repo string) githubSource {
 }
 
 func (s githubSource) Description() string {
-	return fmt.Sprintf("github:%s", s.repo)
+	return fmt.Sprintf("github.com/%s", s.repo)
 }
 
 func (s githubSource) FindUpdate(options updater.UpdateOptions) (*updater.Update, error) {

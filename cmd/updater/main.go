@@ -22,6 +22,7 @@ type flags struct {
 	github    string
 	current   string
 	download  bool
+	apply     string
 }
 
 func main() {
@@ -39,6 +40,7 @@ func loadFlags() flags {
 	flag.StringVar(&f.github, "github", "", "Github repo")
 	flag.StringVar(&f.current, "current", "", "Current version")
 	flag.BoolVar(&f.download, "download", false, "Download update")
+	flag.StringVar(&f.apply, "apply", "", "Apply")
 	flag.Parse()
 	return f
 }
@@ -89,7 +91,10 @@ func run(f flags) error {
 		fmt.Println("{}")
 		return nil
 	}
-	if !f.download || !update.NeedUpdate {
+
+	checkOnly := !f.download && f.apply == ""
+
+	if checkOnly || !update.NeedUpdate {
 		b, err := json.MarshalIndent(update, "", "  ")
 		if err != nil {
 			return err
@@ -98,10 +103,28 @@ func run(f flags) error {
 		return nil
 	}
 
+	// TODO: Cleanup old files
+
 	// Download
-	if err := upd.Download(update, options); err != nil {
-		return err
+	if f.download {
+		if err := upd.Download(update, options); err != nil {
+			return err
+		}
 	}
+
+	// Apply
+	if f.apply != "" {
+		localPath := update.Asset.LocalPath
+		if localPath == "" {
+			return errors.Errorf("No local asset to apply, use with -download option?")
+		}
+		destinationPath := f.apply
+		if err := apply(options, localPath, destinationPath); err != nil {
+			return err
+		}
+		update.Applied = f.apply
+	}
+
 	b, err := json.MarshalIndent(update, "", "  ")
 	if err != nil {
 		return err

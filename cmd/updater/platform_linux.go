@@ -6,5 +6,5 @@ import (
 )
 
 func apply(options updater.UpdateOptions, sourcePath string, destinationPath string) error {
-	return errors.Errorf("unsupported platform")
+	return errors.Errorf("Unsupported platform")
 }

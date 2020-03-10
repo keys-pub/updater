@@ -9,7 +9,8 @@ import (
 )
 
 func apply(options updater.UpdateOptions, assetPath string, applyPath string) error {
-	cmd := exec.Command(assetPath)
+	logger.Infof("Running msiexec.exe -i %s", assetPath)
+	cmd := exec.Command("msiexec.exe", "-i", assetPath)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.Wrapf(err, "Command failed (%s)", assetPath)

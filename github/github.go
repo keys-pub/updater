@@ -111,6 +111,8 @@ func (s githubSource) findUpdate(options updater.UpdateOptions, timeout time.Dur
 	switch runtime.GOOS {
 	case "darwin":
 		us = fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-mac.yml", s.repo)
+	case "windows":
+		us = fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-windows.yml", s.repo)
 	default:
 		return nil, errors.Errorf("Unsupported platform")
 	}

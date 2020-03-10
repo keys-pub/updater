@@ -18,14 +18,14 @@ func checkDestination(options updater.UpdateOptions, dir string, file string) er
 	return nil
 }
 
-func apply(options updater.UpdateOptions, sourcePath string, destinationPath string) error {
-	destinationDir, destinationFile := filepath.Split(destinationPath)
+func apply(options updater.UpdateOptions, assetPath string, applyPath string) error {
+	destinationDir, destinationFile := filepath.Split(applyPath)
 	if err := checkDestination(options, destinationDir, destinationFile); err != nil {
 		return err
 	}
 
-	sourceDir := path.Dir(sourcePath)
-	args := []string{"/usr/bin/ditto", "-V", "-x", "-k", "--sequesterRsrc", "--rsrc", sourcePath, sourceDir}
+	sourceDir := path.Dir(assetPath)
+	args := []string{"/usr/bin/ditto", "-V", "-x", "-k", "--sequesterRsrc", "--rsrc", assetPath, sourceDir}
 	logger.Infof("Running %s", strings.Join(args, " "))
 	cmd := exec.Command(args[0], args[1:]...)
 
@@ -35,20 +35,20 @@ func apply(options updater.UpdateOptions, sourcePath string, destinationPath str
 	}
 	logger.Debugf("%s", out)
 
-	if _, err := os.Stat(destinationPath); err == nil {
-		logger.Infof("Removing %s", destinationPath)
-		if err := os.RemoveAll(destinationPath); err != nil {
+	if _, err := os.Stat(applyPath); err == nil {
+		logger.Infof("Removing %s", applyPath)
+		if err := os.RemoveAll(applyPath); err != nil {
 			return err
 		}
 	}
 	path := filepath.Join(sourceDir, destinationFile)
-	logger.Infof("Renaming %s to %s", path, destinationPath)
-	if err := os.Rename(path, destinationPath); err != nil {
+	logger.Infof("Renaming %s to %s", path, applyPath)
+	if err := os.Rename(path, applyPath); err != nil {
 		return err
 	}
 
-	logger.Infof("Removing %s", sourcePath)
-	if err := os.Remove(sourcePath); err != nil {
+	logger.Infof("Removing %s", assetPath)
+	if err := os.Remove(assetPath); err != nil {
 		return err
 	}
 

@@ -118,8 +118,7 @@ func run(f flags) error {
 		if localPath == "" {
 			return errors.Errorf("No local asset to apply, use with -download option?")
 		}
-		destinationPath := f.apply
-		if err := apply(options, localPath, destinationPath); err != nil {
+		if err := apply(options, localPath, f.apply); err != nil {
 			return err
 		}
 		update.Applied = f.apply

@@ -13,7 +13,7 @@ import (
 )
 
 // Version is the updater version
-const Version = "0.1.3"
+const Version = "0.1.4"
 
 // Updater knows how to find and apply updates
 type Updater struct {

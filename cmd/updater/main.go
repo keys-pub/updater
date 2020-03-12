@@ -103,12 +103,13 @@ func run(f flags) error {
 		return nil
 	}
 
-	// TODO: Cleanup old files
-
 	// Download
 	if f.download {
 		if err := upd.Download(update, options); err != nil {
 			return err
+		}
+		if update.Asset != nil {
+			updater.Cleanup(options.AppName, update.Asset.LocalPath)
 		}
 	}
 

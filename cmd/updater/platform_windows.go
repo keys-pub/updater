@@ -14,11 +14,5 @@ func apply(options updater.UpdateOptions, assetPath string, applyPath string) er
 		return errors.Wrapf(err, "Command failed (%s)", assetPath)
 	}
 
-	// TODO: Cleanup asset
-	// logger.Infof("Removing %s", assetPath)
-	// if err := os.Remove(assetPath); err != nil {
-	// 	return err
-	// }
-
 	return nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func checkDestination(options updater.UpdateOptions, dir string, file string) error {
-	if file != options.AppName+".app" {
+	if strings.HasPrefix(file, ".app") {
 		return errors.Errorf("invalid destination file: %s", file)
 	}
 	return nil
@@ -36,19 +36,14 @@ func apply(options updater.UpdateOptions, assetPath string, applyPath string) er
 	logger.Debugf("%s", out)
 
 	if _, err := os.Stat(applyPath); err == nil {
-		logger.Infof("Removing %s", applyPath)
+		logger.Infof("Removing existing %s", applyPath)
 		if err := os.RemoveAll(applyPath); err != nil {
 			return err
 		}
 	}
 	path := filepath.Join(sourceDir, destinationFile)
-	logger.Infof("Renaming %s to %s", path, applyPath)
+	logger.Infof("Moving %s to %s", path, applyPath)
 	if err := os.Rename(path, applyPath); err != nil {
-		return err
-	}
-
-	logger.Infof("Removing %s", assetPath)
-	if err := os.Remove(assetPath); err != nil {
 		return err
 	}
 

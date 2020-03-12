@@ -53,10 +53,6 @@ func (u *Updater) Download(update *Update, options UpdateOptions) error {
 	return nil
 }
 
-func tempDir(appName string) string {
-	return filepath.Join(os.TempDir(), "updater", appName)
-}
-
 // downloadAsset will download the update to a temporary path (if not cached),
 // check the digest, and set the LocalPath property on the asset.
 func (u *Updater) downloadAsset(asset *Asset, tmpDir string, options UpdateOptions) error {
@@ -107,11 +103,33 @@ func (u *Updater) CheckForUpdate(options UpdateOptions) (*Update, error) {
 	return update, nil
 }
 
-func remove(tmpDir string) {
-	if tmpDir != "" {
-		logger.Infof("Clearing temporary directory: %q", tmpDir)
-		if err := os.RemoveAll(tmpDir); err != nil {
-			logger.Warningf("Error removing temporary directory %q: %s", tmpDir, err)
+func tempDir(appName string) string {
+	return filepath.Join(os.TempDir(), "updater", appName)
+}
+
+// Cleanup files, except for a path (presumably the update).
+// You can do this after you download an update, so that if the update already
+// exists it doesn't have to be re-downloaded, which removes all other files
+// except the current update.
+func Cleanup(appName string, except string) {
+	dir := tempDir(appName)
+
+	remove := []string{}
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if path != except && path != dir {
+			remove = append(remove, path)
+		}
+		return nil
+	}); err != nil {
+		logger.Errorf("Error listing temp dir: %v", err)
+		return
+	}
+
+	for _, r := range remove {
+		logger.Infof("Removing %s", r)
+		if err := os.Remove(r); err != nil {
+			logger.Errorf("Error removing %s: %v", r, err)
+			return
 		}
 	}
 }

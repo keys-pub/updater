@@ -12,7 +12,7 @@ import (
 )
 
 func checkDestination(options updater.UpdateOptions, dir string, file string) error {
-	if strings.HasPrefix(file, ".app") {
+	if !strings.HasSuffix(file, ".app") {
 		return errors.Errorf("invalid destination file: %s", file)
 	}
 	return nil

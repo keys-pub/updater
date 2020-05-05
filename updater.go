@@ -5,6 +5,7 @@ package updater
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -13,7 +14,7 @@ import (
 )
 
 // Version is the updater version
-const Version = "0.1.8"
+const Version = "0.2.1"
 
 // Updater knows how to find and apply updates
 type Updater struct {
@@ -114,22 +115,22 @@ func tempDir(appName string) string {
 func Cleanup(appName string, except string) {
 	dir := tempDir(appName)
 
-	remove := []string{}
-	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if path != except && path != dir {
-			remove = append(remove, path)
-		}
-		return nil
-	}); err != nil {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
 		logger.Errorf("Error listing temp dir: %v", err)
 		return
 	}
+	exceptBase := filepath.Base(except)
 
-	for _, r := range remove {
-		logger.Infof("Removing %s", r)
-		if err := os.RemoveAll(r); err != nil {
-			logger.Errorf("Error removing %s: %v", r, err)
-			return
+	logger.Infof("Cleanup files (except=%s)...", exceptBase)
+	for _, file := range files {
+		name := file.Name()
+		if name != exceptBase {
+			logger.Infof("Cleanup, removing %s", name)
+			if err := os.RemoveAll(name); err != nil {
+				logger.Errorf("Error removing %s: %v", file, err)
+				return
+			}
 		}
 	}
 }

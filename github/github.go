@@ -82,7 +82,7 @@ func (s githubSource) updateFromGithub(b []byte, options updater.UpdateOptions) 
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://github.com/%s/releases/latest/download/%s", s.repo, gupd.Path)
+	url := fmt.Sprintf("https://github.com/%s/releases/download/v%s/%s", s.repo, gupd.Version, gupd.Path)
 
 	curr, err := semver.Make(options.Version)
 	next, err := semver.Make(gupd.Version)

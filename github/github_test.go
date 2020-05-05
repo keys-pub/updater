@@ -2,7 +2,9 @@ package github
 
 import (
 	"io/ioutil"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/keys-pub/updater"
 	"github.com/stretchr/testify/require"
@@ -29,4 +31,17 @@ func TestUpdate(t *testing.T) {
 	upd, err = s.updateFromGithub(b, updater.UpdateOptions{Version: "0.0.19"})
 	require.NoError(t, err)
 	require.False(t, upd.NeedUpdate)
+}
+
+func TestPrerelease(t *testing.T) {
+	// SetLogger(NewLogger(DebugLevel))
+	s := newGithubSource("keys-pub/app")
+	urs, err := s.findManifestURL(true, time.Second*10)
+	require.NoError(t, err)
+	t.Logf("Prelease: %s", urs)
+
+	urs2, err := s.findManifestURL(false, time.Second*10)
+	require.NoError(t, err)
+	t.Logf("Latest: %s", urs2)
+	require.True(t, strings.HasPrefix(urs2, "https://github.com/keys-pub/app/releases/latest/download/latest"))
 }

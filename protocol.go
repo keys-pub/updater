@@ -42,4 +42,6 @@ type UpdateOptions struct {
 	Version string `json:"version"`
 	// AppName is name of the app
 	AppName string `json:"appName"`
+	// Prerelease will request latest prerelease
+	Prerelease bool `json:"prerelease"`
 }

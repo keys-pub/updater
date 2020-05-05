@@ -16,13 +16,14 @@ import (
 )
 
 type flags struct {
-	version   bool
-	logToFile bool
-	appName   string
-	github    string
-	current   string
-	download  bool
-	apply     string
+	version    bool
+	logToFile  bool
+	appName    string
+	github     string
+	current    string
+	download   bool
+	apply      string
+	prerelease bool
 }
 
 func main() {
@@ -40,6 +41,7 @@ func loadFlags() flags {
 	flag.StringVar(&f.github, "github", "", "Github repo")
 	flag.StringVar(&f.current, "current", "", "Current version")
 	flag.BoolVar(&f.download, "download", false, "Download update")
+	flag.BoolVar(&f.prerelease, "prerelease", false, "Prerelease")
 	flag.StringVar(&f.apply, "apply", "", "Apply")
 	flag.Parse()
 	return f
@@ -70,8 +72,9 @@ func run(f flags) error {
 	}
 
 	options := updater.UpdateOptions{
-		AppName: f.appName,
-		Version: f.current,
+		AppName:    f.appName,
+		Version:    f.current,
+		Prerelease: f.prerelease,
 	}
 
 	var src updater.UpdateSource

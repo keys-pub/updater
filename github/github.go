@@ -6,6 +6,7 @@ package github
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -102,29 +103,112 @@ func (s githubSource) updateFromGithub(b []byte, options updater.UpdateOptions) 
 	return uu, nil
 }
 
+func (s githubSource) latestManifestURL() (string, error) {
+	switch runtime.GOOS {
+	case "darwin":
+		return fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-mac.yml", s.repo), nil
+	case "windows":
+		return fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-windows.yml", s.repo), nil
+	default:
+		return "", errors.Errorf("Unsupported platform")
+	}
+}
+
+func (s githubSource) tagManifestURL(tag string) (string, error) {
+	switch runtime.GOOS {
+	case "darwin":
+		return fmt.Sprintf("https://github.com/%s/releases/download/%s/latest-mac.yml", s.repo, tag), nil
+	case "windows":
+		return fmt.Sprintf("https://github.com/%s/releases/download/%s/latest-windows.yml", s.repo, tag), nil
+	default:
+		return "", errors.Errorf("Unsupported platform")
+	}
+}
+
+type release struct {
+	Prerelease bool   `json:"prerelease"`
+	Name       string `json:"name"`
+	Tag        string `json:"tag_name"`
+}
+
+func (s githubSource) prereleaseURL(timeout time.Duration) (string, error) {
+	b, err := request(fmt.Sprintf("https://api.github.com/repos/%s/releases", s.repo), timeout)
+	if err != nil {
+		return "", err
+	}
+
+	var rels []*release
+	if err := json.Unmarshal(b, &rels); err != nil {
+		return "", err
+	}
+	if len(rels) == 0 {
+		return "", nil
+	}
+
+	rel := rels[0]
+
+	if !rel.Prerelease {
+		return "", nil
+	}
+
+	if rel.Tag == "" {
+		return "", errors.Errorf("no tag for release")
+	}
+
+	return s.tagManifestURL(rel.Tag)
+}
+
+func (s githubSource) findManifestURL(prerelease bool, timeout time.Duration) (string, error) {
+	if prerelease {
+		urs, err := s.prereleaseURL(timeout)
+		// If prelease not found or errored, fall back to latest
+		if err != nil {
+			logger.Infof("Error checking for prerelease: %v", err)
+		} else if urs != "" {
+			return urs, nil
+		}
+	}
+
+	return s.latestManifestURL()
+}
+
 func (s githubSource) findUpdate(options updater.UpdateOptions, timeout time.Duration) (*updater.Update, error) {
 	if s.repo == "" {
 		return nil, errors.Errorf("No repo specified")
 	}
 
-	var us string
-	switch runtime.GOOS {
-	case "darwin":
-		us = fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-mac.yml", s.repo)
-	case "windows":
-		us = fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-windows.yml", s.repo)
-	default:
-		return nil, errors.Errorf("Unsupported platform")
-	}
-
-	u, err := url.Parse(us)
+	manifestURL, err := s.findManifestURL(options.Prerelease, timeout)
 	if err != nil {
 		return nil, err
 	}
-	urlString := u.String()
-	logger.Infof("Requesting %s", urlString)
 
-	req, err := http.NewRequest("GET", urlString, nil)
+	if manifestURL == "" {
+		return nil, nil
+	}
+
+	ur, err := url.Parse(manifestURL)
+	if err != nil {
+		return nil, err
+	}
+	urs := ur.String()
+	logger.Infof("Requesting %s", urs)
+
+	b, err := request(urs, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	uu, err := s.updateFromGithub(b, options)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debugf("Received update response: %#v", uu)
+	return uu, nil
+}
+
+func request(urs string, timeout time.Duration) ([]byte, error) {
+	req, err := http.NewRequest("GET", urs, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -140,17 +224,5 @@ func (s githubSource) findUpdate(options updater.UpdateOptions, timeout time.Dur
 		return nil, fmt.Errorf("Find update returned bad HTTP status %v", resp.Status)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	uu, err := s.updateFromGithub(b, options)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debugf("Received update response: %#v", uu)
-
-	return uu, nil
+	return ioutil.ReadAll(resp.Body)
 }

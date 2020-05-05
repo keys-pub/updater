@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO: Tests against pretend repos
+
 func TestRun(t *testing.T) {
 	f := flags{current: "0.0.1", appName: "Keys", github: "keys-pub/app"}
 	err := run(f)
@@ -16,5 +18,11 @@ func TestRun(t *testing.T) {
 
 	f = flags{current: "0.0.1", appName: "Keys", github: "keys-pub/app", download: true}
 	err = run(f)
+	require.NoError(t, err)
+}
+
+func TestRunPrerelease(t *testing.T) {
+	f := flags{current: "0.0.1", appName: "Keys", github: "keys-pub/app", prerelease: true}
+	err := run(f)
 	require.NoError(t, err)
 }

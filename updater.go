@@ -127,7 +127,7 @@ func Cleanup(appName string, except string) {
 
 	for _, r := range remove {
 		logger.Infof("Removing %s", r)
-		if err := os.Remove(r); err != nil {
+		if err := os.RemoveAll(r); err != nil {
 			logger.Errorf("Error removing %s: %v", r, err)
 			return
 		}

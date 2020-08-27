@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"runtime"
 	"time"
 
 	"github.com/blang/semver"
@@ -22,7 +21,8 @@ import (
 )
 
 type githubSource struct {
-	repo string
+	repo     string
+	platform string
 }
 
 type file struct {
@@ -41,12 +41,12 @@ type update struct {
 }
 
 // NewUpdateSource returns Github update source.
-func NewUpdateSource(repo string) updater.UpdateSource {
-	return newGithubSource(repo)
+func NewUpdateSource(repo string, platform string) updater.UpdateSource {
+	return newGithubSource(repo, platform)
 }
 
-func newGithubSource(repo string) githubSource {
-	return githubSource{repo: repo}
+func newGithubSource(repo string, platform string) githubSource {
+	return githubSource{repo: repo, platform: platform}
 }
 
 func (s githubSource) Description() string {
@@ -104,22 +104,26 @@ func (s githubSource) updateFromGithub(b []byte, options updater.UpdateOptions) 
 }
 
 func (s githubSource) latestManifestURL() (string, error) {
-	switch runtime.GOOS {
+	switch s.platform {
 	case "darwin":
 		return fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-mac.yml", s.repo), nil
 	case "windows":
 		return fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-windows.yml", s.repo), nil
+	case "linux":
+		return fmt.Sprintf("https://github.com/%s/releases/latest/download/latest-linux.yml", s.repo), nil
 	default:
 		return "", errors.Errorf("Unsupported platform")
 	}
 }
 
 func (s githubSource) tagManifestURL(tag string) (string, error) {
-	switch runtime.GOOS {
+	switch s.platform {
 	case "darwin":
 		return fmt.Sprintf("https://github.com/%s/releases/download/%s/latest-mac.yml", s.repo, tag), nil
 	case "windows":
 		return fmt.Sprintf("https://github.com/%s/releases/download/%s/latest-windows.yml", s.repo, tag), nil
+	case "linux":
+		return fmt.Sprintf("https://github.com/%s/releases/download/%s/latest-linux.yml", s.repo, tag), nil
 	default:
 		return "", errors.Errorf("Unsupported platform")
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
-	s := newGithubSource("keys-pub/app")
+	s := newGithubSource("keys-pub/app", "darwin")
 	b, err := ioutil.ReadFile("./testdata/latest-mac.yml")
 	require.NoError(t, err)
 	upd, err := s.updateFromGithub(b, updater.UpdateOptions{Version: "0.0.17"})
@@ -35,7 +35,7 @@ func TestUpdate(t *testing.T) {
 
 func TestPrerelease(t *testing.T) {
 	// SetLogger(NewLogger(DebugLevel))
-	s := newGithubSource("keys-pub/app")
+	s := newGithubSource("keys-pub/app", "darwin")
 	urs, err := s.findManifestURL(true, time.Second*10)
 	require.NoError(t, err)
 	t.Logf("Prelease: %s", urs)

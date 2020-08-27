@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/keys-pub/updater"
 	"github.com/keys-pub/updater/github"
@@ -20,6 +21,7 @@ type flags struct {
 	logToFile  bool
 	appName    string
 	github     string
+	platform   string
 	current    string
 	download   bool
 	apply      string
@@ -39,6 +41,7 @@ func loadFlags() flags {
 	flag.BoolVar(&f.logToFile, "log-to-file", false, "Log to file")
 	flag.StringVar(&f.appName, "app-name", "", "App name")
 	flag.StringVar(&f.github, "github", "", "Github repo")
+	flag.StringVar(&f.platform, "platform", runtime.GOOS, "Platform")
 	flag.StringVar(&f.current, "current", "", "Current version")
 	flag.BoolVar(&f.download, "download", false, "Download update")
 	flag.BoolVar(&f.prerelease, "prerelease", false, "Prerelease")
@@ -79,7 +82,7 @@ func run(f flags) error {
 
 	var src updater.UpdateSource
 	if f.github != "" {
-		src = github.NewUpdateSource(f.github)
+		src = github.NewUpdateSource(f.github, f.platform)
 	} else {
 		return errors.Errorf("No update source")
 	}
